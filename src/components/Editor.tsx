@@ -20,7 +20,7 @@ export default function Editor() {
   const [fontSize, setFontSize] = useState(72);
   const [fontFamily, setFontFamily] = useState('Bebas Neue');
   const [color, setColor] = useState('#FFFFFF');
-  const [textShadow, setTextShadow] = useState('2px 2px 4px #000000');
+  const [textShadow, setTextShadow] = useState('2px 2px 4px rgba(0,0,0,0.5)');
   const [fontWeight, setFontWeight] = useState<'normal' | 'bold'>('normal');
   const [fontStyle, setFontStyle] = useState<'normal' | 'italic'>('normal');
   const [textDecoration, setTextDecoration] = useState<'none' | 'underline'>('none');
@@ -131,7 +131,6 @@ export default function Editor() {
     fontStyle: fontStyle,
     textDecoration: textDecoration,
     opacity: opacity,
-    transform: `rotate(${textRotation}deg)`,
     padding: '20px'
   };
 
@@ -184,6 +183,7 @@ export default function Editor() {
             textStyles={textStyles}
             imageStyles={imageStyles}
             aspectRatio={aspectRatio}
+            textRotation={textRotation}
             />
         ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4 border-2 border-dashed rounded-lg bg-background/50">

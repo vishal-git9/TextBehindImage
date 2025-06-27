@@ -13,6 +13,7 @@ type CanvasProps = {
   textStyles: React.CSSProperties;
   imageStyles: React.CSSProperties;
   aspectRatio: string;
+  textRotation: number;
 };
 
 const aspectRatioClasses: { [key: string]: string } = {
@@ -21,7 +22,7 @@ const aspectRatioClasses: { [key: string]: string } = {
   '16:9': 'aspect-video',
 };
 
-export default function Canvas({ editorAreaRef, imageSrc, text, textStyles, imageStyles, aspectRatio }: CanvasProps) {
+export default function Canvas({ editorAreaRef, imageSrc, text, textStyles, imageStyles, aspectRatio, textRotation }: CanvasProps) {
   const nodeRef = useRef(null);
 
   return (
@@ -43,12 +44,16 @@ export default function Canvas({ editorAreaRef, imageSrc, text, textStyles, imag
         key={imageSrc}
       />
       <Draggable bounds="parent" nodeRef={nodeRef}>
-        <div
-          ref={nodeRef}
-          style={textStyles}
-          className="absolute cursor-move select-none whitespace-pre-wrap transition-all duration-200"
-        >
-          {text}
+        <div ref={nodeRef} className="absolute cursor-move">
+          <div
+            style={{
+              ...textStyles,
+              transform: `rotate(${textRotation}deg)`,
+            }}
+            className="select-none whitespace-pre-wrap"
+          >
+            {text}
+          </div>
         </div>
       </Draggable>
     </div>

@@ -178,8 +178,16 @@ export default function EditingPanel({
                   </div>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="text-shadow">Text Shadow</Label>
-                    <Input id="text-shadow" value={textShadow} onChange={(e) => setTextShadow(e.target.value)} placeholder="e.g., 2px 2px 4px #000000" />
+                  <Label htmlFor="text-shadow">Text Shadow</Label>
+                  <Select value={textShadow} onValueChange={setTextShadow}>
+                      <SelectTrigger id="text-shadow"><SelectValue placeholder="Select shadow" /></SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="1px 1px 2px rgba(0,0,0,0.4)">Subtle</SelectItem>
+                          <SelectItem value="2px 2px 4px rgba(0,0,0,0.5)">Standard</SelectItem>
+                          <SelectItem value="3px 3px 6px rgba(0,0,0,0.6)">Strong</SelectItem>
+                      </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="text-rotation">Rotation: {textRotation}°</Label>
