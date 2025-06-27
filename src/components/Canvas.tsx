@@ -29,7 +29,7 @@ export default function Canvas({ editorAreaRef, imageSrc, text, textStyles, imag
       id="editor-area"
       ref={editorAreaRef}
       className={cn(
-        "relative w-auto h-auto max-w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-gray-900",
+        "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-gray-900",
         aspectRatioClasses[aspectRatio] || 'aspect-video'
       )}
     >
