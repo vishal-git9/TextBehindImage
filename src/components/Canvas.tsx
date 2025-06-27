@@ -3,7 +3,7 @@
 import type React from 'react';
 import Image from 'next/image';
 import Draggable from 'react-draggable';
-import { type RefObject } from 'react';
+import { type RefObject, useRef } from 'react';
 
 type CanvasProps = {
   editorAreaRef: RefObject<HTMLDivElement>;
@@ -13,6 +13,7 @@ type CanvasProps = {
 };
 
 export default function Canvas({ editorAreaRef, imageSrc, text, textStyles }: CanvasProps) {
+  const nodeRef = useRef(null);
   return (
     <div
       id="editor-area"
@@ -27,8 +28,9 @@ export default function Canvas({ editorAreaRef, imageSrc, text, textStyles }: Ca
         className="pointer-events-none"
         data-ai-hint="landscape"
       />
-      <Draggable bounds="parent">
+      <Draggable bounds="parent" nodeRef={nodeRef}>
         <div
+          ref={nodeRef}
           style={textStyles}
           className="absolute cursor-move select-none whitespace-pre-wrap"
         >
