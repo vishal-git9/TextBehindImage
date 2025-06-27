@@ -6,10 +6,12 @@ import { useGoogleFont } from '@/hooks/useGoogleFont';
 import EditingPanel from './EditingPanel';
 import Canvas from './Canvas';
 import { suggestStyle, type SuggestStyleOutput } from '@/ai/flows/suggest-style';
+import { enhanceImage } from '@/ai/flows/enhance-image';
 import { useToast } from "@/hooks/use-toast";
 
 export default function Editor() {
   const { toast } = useToast();
+  // Text state
   const [text, setText] = useState('Your Text Here');
   const [fontSize, setFontSize] = useState(72);
   const [fontFamily, setFontFamily] = useState('Bebas Neue');
@@ -18,7 +20,18 @@ export default function Editor() {
   const [fontWeight, setFontWeight] = useState<'normal' | 'bold'>('normal');
   const [fontStyle, setFontStyle] = useState<'normal' | 'italic'>('normal');
   const [textDecoration, setTextDecoration] = useState<'none' | 'underline'>('none');
+  const [textRotation, setTextRotation] = useState(0);
+  const [opacity, setOpacity] = useState(1);
+
+  // Image state
   const [imageSrc, setImageSrc] = useState<string>('https://placehold.co/1280x720.png');
+  const [imageRotation, setImageRotation] = useState(0);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  
+  // Settings state
+  const [aspectRatio, setAspectRatio] = useState('original');
   const [aiCategory, setAiCategory] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<SuggestStyleOutput | null>(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
@@ -84,6 +97,26 @@ export default function Editor() {
     }
   };
   
+  const handleEnhanceImage = async () => {
+    setIsEnhancing(true);
+    try {
+      const result = await enhanceImage({ imageDataUri: imageSrc });
+      setImageSrc(result.enhancedImageDataUri);
+      toast({
+        title: "Image Enhanced",
+        description: "The AI has enhanced your image.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Enhancement Failed",
+        description: "Could not enhance the image. Please try again.",
+      });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
   const textStyles: React.CSSProperties = {
     fontSize: `${fontSize}px`,
     fontFamily: `'${fontFamily}', sans-serif`,
@@ -92,7 +125,14 @@ export default function Editor() {
     fontWeight: fontWeight,
     fontStyle: fontStyle,
     textDecoration: textDecoration,
+    opacity: opacity,
+    transform: `rotate(${textRotation}deg)`,
     padding: '20px'
+  };
+
+  const imageStyles: React.CSSProperties = {
+    transform: `rotate(${imageRotation}deg)`,
+    filter: `brightness(${brightness}%) contrast(${contrast}%)`,
   };
 
   const toggleBold = () => setFontWeight(fontWeight === 'bold' ? 'normal' : 'bold');
@@ -102,6 +142,7 @@ export default function Editor() {
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden">
       <EditingPanel 
+        // Text props
         text={text} setText={setText}
         fontSize={fontSize} setFontSize={setFontSize}
         fontFamily={fontFamily} setFontFamily={setFontFamily}
@@ -110,20 +151,32 @@ export default function Editor() {
         fontWeight={fontWeight} toggleBold={toggleBold}
         fontStyle={fontStyle} toggleItalic={toggleItalic}
         textDecoration={textDecoration} toggleUnderline={toggleUnderline}
+        textRotation={textRotation} setTextRotation={setTextRotation}
+        opacity={opacity} setOpacity={setOpacity}
+        // Image props
+        imageRotation={imageRotation} setImageRotation={setImageRotation}
+        brightness={brightness} setBrightness={setBrightness}
+        contrast={contrast} setContrast={setContrast}
+        handleEnhanceImage={handleEnhanceImage}
+        isEnhancing={isEnhancing}
+        handleImageUpload={handleImageUpload}
+        imageInputRef={imageInputRef}
+        // Settings props
+        aspectRatio={aspectRatio} setAspectRatio={setAspectRatio}
         aiCategory={aiCategory} setAiCategory={setAiCategory}
         handleAiSuggest={handleAiSuggest}
         isLoadingAi={isLoadingAi}
         aiSuggestions={aiSuggestions}
-        handleImageUpload={handleImageUpload}
         handleDownload={handleDownload}
-        imageInputRef={imageInputRef}
       />
-      <main className="flex-1 flex items-center justify-center p-4 md:p-8 bg-muted/30 dark:bg-muted/10">
+      <main className="flex-1 flex items-center justify-center p-4 md:p-8 bg-muted/30 dark:bg-muted/10 overflow-hidden">
         <Canvas 
           editorAreaRef={editorAreaRef}
           imageSrc={imageSrc}
           text={text}
           textStyles={textStyles}
+          imageStyles={imageStyles}
+          aspectRatio={aspectRatio}
         />
       </main>
     </div>
