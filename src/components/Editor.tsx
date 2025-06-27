@@ -10,7 +10,7 @@ import { suggestStyle, type SuggestStyleOutput } from '@/ai/flows/suggest-style'
 import { enhanceImage } from '@/ai/flows/enhance-image';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
-import { UploadCloud } from 'lucide-react';
+import { Download, UploadCloud } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useHistoryState } from '@/hooks/useHistoryState';
 
@@ -154,7 +154,6 @@ export default function Editor() {
     fontStyle: state.fontStyle,
     textDecoration: state.textDecoration,
     opacity: state.opacity,
-    padding: '20px'
   };
 
   const imageStyles: React.CSSProperties = {
@@ -219,7 +218,6 @@ export default function Editor() {
         // Actions
         handleEnhanceImage={handleEnhanceImage}
         handleAiSuggest={handleAiSuggest}
-        handleDownload={handleDownload}
         undo={undo}
         redo={redo}
         canUndo={canUndo}
@@ -233,15 +231,22 @@ export default function Editor() {
       />
       <main className="flex-1 flex items-center justify-center p-4 md:p-8 bg-muted/30 dark:bg-muted/10 overflow-hidden">
         {state.imageSrc ? (
-            <Canvas 
-            editorAreaRef={editorAreaRef}
-            imageSrc={state.imageSrc}
-            text={state.text}
-            textStyles={textStyles}
-            imageStyles={imageStyles}
-            aspectRatio={state.aspectRatio}
-            textRotation={state.textRotation}
-            />
+            <div className="relative w-full h-full flex flex-col items-center justify-center gap-4">
+              <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+                <Canvas 
+                  editorAreaRef={editorAreaRef}
+                  imageSrc={state.imageSrc}
+                  text={state.text}
+                  textStyles={textStyles}
+                  imageStyles={imageStyles}
+                  aspectRatio={state.aspectRatio}
+                  textRotation={state.textRotation}
+                />
+              </div>
+              <Button onClick={handleDownload} disabled={!state.imageSrc} className="shrink-0">
+                  <Download className="mr-2 h-4 w-4" /> Download Image
+              </Button>
+            </div>
         ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4 border-2 border-dashed rounded-lg bg-background/50">
                 <div className="text-center">

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Bold, Italic, Underline, Wand2, Image as ImageIcon, Download,
+  Bold, Italic, Underline, Wand2, Image as ImageIcon,
   Type, Paintbrush, Settings, RotateCw, ChevronsUpDown, Undo, Redo
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -67,7 +67,6 @@ type EditingPanelProps = {
   // Actions
   handleEnhanceImage: () => void;
   handleAiSuggest: () => void;
-  handleDownload: () => void;
   undo: () => void;
   redo: () => void;
   
@@ -85,7 +84,7 @@ export default function EditingPanel({
   fontWeight, toggleBold, fontStyle, toggleItalic, textDecoration, toggleUnderline, textRotation, setTextRotation,
   opacity, setOpacity, imageSrc, imageRotation, setImageRotation, brightness, setBrightness, contrast, setContrast,
   handleEnhanceImage, isEnhancing, imageInputRef, aspectRatio, setAspectRatio,
-  aiCategory, setAiCategory, handleAiSuggest, isLoadingAi, aiSuggestions, handleDownload,
+  aiCategory, setAiCategory, handleAiSuggest, isLoadingAi, aiSuggestions,
   undo, redo, canUndo, canRedo
 }: EditingPanelProps) {
   const [fontSearch, setFontSearch] = useState("");
@@ -326,12 +325,6 @@ export default function EditingPanel({
                         </div>
                     </div>
                     )}
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                   <Button onClick={handleDownload} className="w-full" disabled={!imageSrc}>
-                        <Download className="mr-2 h-4 w-4" /> Download Image
-                    </Button>
                 </div>
             </CardContent>
           </TabsContent>
