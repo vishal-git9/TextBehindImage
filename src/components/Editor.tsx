@@ -8,6 +8,9 @@ import Canvas from './Canvas';
 import { suggestStyle, type SuggestStyleOutput } from '@/ai/flows/suggest-style';
 import { enhanceImage } from '@/ai/flows/enhance-image';
 import { useToast } from "@/hooks/use-toast";
+import { Button } from '@/components/ui/button';
+import { UploadCloud } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 export default function Editor() {
   const { toast } = useToast();
@@ -24,7 +27,7 @@ export default function Editor() {
   const [opacity, setOpacity] = useState(1);
 
   // Image state
-  const [imageSrc, setImageSrc] = useState<string>('https://placehold.co/1280x720.png');
+  const [imageSrc, setImageSrc] = useState<string>('');
   const [imageRotation, setImageRotation] = useState(0);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
@@ -98,6 +101,7 @@ export default function Editor() {
   };
   
   const handleEnhanceImage = async () => {
+    if (!imageSrc) return;
     setIsEnhancing(true);
     try {
       const result = await enhanceImage({ imageDataUri: imageSrc });
@@ -154,6 +158,7 @@ export default function Editor() {
         textRotation={textRotation} setTextRotation={setTextRotation}
         opacity={opacity} setOpacity={setOpacity}
         // Image props
+        imageSrc={imageSrc}
         imageRotation={imageRotation} setImageRotation={setImageRotation}
         brightness={brightness} setBrightness={setBrightness}
         contrast={contrast} setContrast={setContrast}
@@ -170,14 +175,27 @@ export default function Editor() {
         handleDownload={handleDownload}
       />
       <main className="flex-1 flex items-center justify-center p-4 md:p-8 bg-muted/30 dark:bg-muted/10 overflow-hidden">
-        <Canvas 
-          editorAreaRef={editorAreaRef}
-          imageSrc={imageSrc}
-          text={text}
-          textStyles={textStyles}
-          imageStyles={imageStyles}
-          aspectRatio={aspectRatio}
-        />
+        {imageSrc ? (
+            <Canvas 
+            editorAreaRef={editorAreaRef}
+            imageSrc={imageSrc}
+            text={text}
+            textStyles={textStyles}
+            imageStyles={imageStyles}
+            aspectRatio={aspectRatio}
+            />
+        ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-4 border-2 border-dashed rounded-lg bg-background/50">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold">Start by adding an image</h2>
+                    <p className="text-muted-foreground">Upload an image to begin your creation.</p>
+                </div>
+                <Button onClick={() => imageInputRef.current?.click()} size="lg">
+                    <UploadCloud className="mr-2"/>
+                    Upload Image
+                </Button>
+            </div>
+        )}
       </main>
     </div>
   );
