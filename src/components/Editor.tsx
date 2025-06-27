@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useCallback } from 'react';
@@ -145,6 +146,7 @@ export default function Editor() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+      <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" />
       <EditingPanel 
         // Text props
         text={text} setText={setText}
@@ -164,7 +166,6 @@ export default function Editor() {
         contrast={contrast} setContrast={setContrast}
         handleEnhanceImage={handleEnhanceImage}
         isEnhancing={isEnhancing}
-        handleImageUpload={handleImageUpload}
         imageInputRef={imageInputRef}
         // Settings props
         aspectRatio={aspectRatio} setAspectRatio={setAspectRatio}

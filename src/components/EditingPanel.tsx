@@ -47,7 +47,6 @@ type EditingPanelProps = {
   contrast: number; setContrast: (contrast: number) => void;
   handleEnhanceImage: () => void;
   isEnhancing: boolean;
-  handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   imageInputRef: React.RefObject<HTMLInputElement>;
   
   // Settings
@@ -63,7 +62,7 @@ export default function EditingPanel({
   text, setText, fontSize, setFontSize, fontFamily, setFontFamily, color, setColor, textShadow, setTextShadow,
   fontWeight, toggleBold, fontStyle, toggleItalic, textDecoration, toggleUnderline, textRotation, setTextRotation,
   opacity, setOpacity, imageSrc, imageRotation, setImageRotation, brightness, setBrightness, contrast, setContrast,
-  handleEnhanceImage, isEnhancing, handleImageUpload, imageInputRef, aspectRatio, setAspectRatio,
+  handleEnhanceImage, isEnhancing, imageInputRef, aspectRatio, setAspectRatio,
   aiCategory, setAiCategory, handleAiSuggest, isLoadingAi, aiSuggestions, handleDownload
 }: EditingPanelProps) {
   const [fontSearch, setFontSearch] = useState("");
@@ -220,7 +219,6 @@ export default function EditingPanel({
                         <Wand2 className="mr-2 h-4 w-4" />
                         {isEnhancing ? 'Enhancing...' : 'Enhance Image'}
                     </Button>
-                    <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" />
                     <Button variant="outline" className="w-full" onClick={() => imageInputRef.current?.click()}>
                         <ImageIcon className="mr-2 h-4 w-4" /> Change Image
                     </Button>
