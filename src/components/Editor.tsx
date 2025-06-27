@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useCallback } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { toPng } from 'html-to-image';
 import { useGoogleFont } from '@/hooks/useGoogleFont';
 import EditingPanel from './EditingPanel';
@@ -12,38 +12,58 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import { UploadCloud } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useHistoryState } from '@/hooks/useHistoryState';
+
+type EditorState = {
+  text: string;
+  fontSize: number;
+  fontFamily: string;
+  color: string;
+  textShadow: string;
+  fontWeight: 'normal' | 'bold';
+  fontStyle: 'normal' | 'italic';
+  textDecoration: 'none' | 'underline';
+  textRotation: number;
+  opacity: number;
+  imageSrc: string;
+  imageRotation: number;
+  brightness: number;
+  contrast: number;
+  aspectRatio: string;
+};
+
+const initialState: EditorState = {
+  text: 'Your Text Here',
+  fontSize: 72,
+  fontFamily: 'Bebas Neue',
+  color: '#FFFFFF',
+  textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+  fontWeight: 'normal',
+  fontStyle: 'normal',
+  textDecoration: 'none',
+  textRotation: 0,
+  opacity: 1,
+  imageSrc: '',
+  imageRotation: 0,
+  brightness: 100,
+  contrast: 100,
+  aspectRatio: 'original',
+};
+
 
 export default function Editor() {
   const { toast } = useToast();
-  // Text state
-  const [text, setText] = useState('Your Text Here');
-  const [fontSize, setFontSize] = useState(72);
-  const [fontFamily, setFontFamily] = useState('Bebas Neue');
-  const [color, setColor] = useState('#FFFFFF');
-  const [textShadow, setTextShadow] = useState('2px 2px 4px rgba(0,0,0,0.5)');
-  const [fontWeight, setFontWeight] = useState<'normal' | 'bold'>('normal');
-  const [fontStyle, setFontStyle] = useState<'normal' | 'italic'>('normal');
-  const [textDecoration, setTextDecoration] = useState<'none' | 'underline'>('none');
-  const [textRotation, setTextRotation] = useState(0);
-  const [opacity, setOpacity] = useState(1);
-
-  // Image state
-  const [imageSrc, setImageSrc] = useState<string>('');
-  const [imageRotation, setImageRotation] = useState(0);
-  const [brightness, setBrightness] = useState(100);
-  const [contrast, setContrast] = useState(100);
-  const [isEnhancing, setIsEnhancing] = useState(false);
+  const { state, setState, undo, redo, canUndo, canRedo } = useHistoryState<EditorState>(initialState);
   
-  // Settings state
-  const [aspectRatio, setAspectRatio] = useState('original');
   const [aiCategory, setAiCategory] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<SuggestStyleOutput | null>(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   const editorAreaRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  useGoogleFont(fontFamily);
+  useGoogleFont(state.fontFamily);
 
   const handleDownload = useCallback(() => {
     if (editorAreaRef.current === null) {
@@ -69,7 +89,7 @@ export default function Editor() {
     if (e.target.files && e.target.files[0]) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setImageSrc(event.target?.result as string);
+        setState(s => ({ ...s, imageSrc: event.target?.result as string }));
       };
       reader.readAsDataURL(e.target.files[0]);
     }
@@ -87,8 +107,11 @@ export default function Editor() {
     setIsLoadingAi(true);
     try {
         const result = await suggestStyle({ category: aiCategory });
-        setFontFamily(result.fontFamily);
-        setColor(result.colorPalette[0] || '#FFFFFF');
+        setState(s => ({
+          ...s,
+          fontFamily: result.fontFamily,
+          color: result.colorPalette[0] || '#FFFFFF'
+        }));
         setAiSuggestions(result);
     } catch (error) {
         toast({
@@ -102,11 +125,11 @@ export default function Editor() {
   };
   
   const handleEnhanceImage = async () => {
-    if (!imageSrc) return;
+    if (!state.imageSrc) return;
     setIsEnhancing(true);
     try {
-      const result = await enhanceImage({ imageDataUri: imageSrc });
-      setImageSrc(result.enhancedImageDataUri);
+      const result = await enhanceImage({ imageDataUri: state.imageSrc });
+      setState(s => ({...s, imageSrc: result.enhancedImageDataUri }));
       toast({
         title: "Image Enhanced",
         description: "The AI has enhanced your image.",
@@ -123,67 +146,101 @@ export default function Editor() {
   };
 
   const textStyles: React.CSSProperties = {
-    fontSize: `${fontSize}px`,
-    fontFamily: `'${fontFamily}', sans-serif`,
-    color: color,
-    textShadow: textShadow,
-    fontWeight: fontWeight,
-    fontStyle: fontStyle,
-    textDecoration: textDecoration,
-    opacity: opacity,
+    fontSize: `${state.fontSize}px`,
+    fontFamily: `'${state.fontFamily}', sans-serif`,
+    color: state.color,
+    textShadow: state.textShadow,
+    fontWeight: state.fontWeight,
+    fontStyle: state.fontStyle,
+    textDecoration: state.textDecoration,
+    opacity: state.opacity,
     padding: '20px'
   };
 
   const imageStyles: React.CSSProperties = {
-    transform: `rotate(${imageRotation}deg)`,
-    filter: `brightness(${brightness}%) contrast(${contrast}%)`,
+    transform: `rotate(${state.imageRotation}deg)`,
+    filter: `brightness(${state.brightness}%) contrast(${state.contrast}%)`,
   };
 
-  const toggleBold = () => setFontWeight(fontWeight === 'bold' ? 'normal' : 'bold');
-  const toggleItalic = () => setFontStyle(fontStyle === 'italic' ? 'normal' : 'italic');
-  const toggleUnderline = () => setTextDecoration(textDecoration === 'underline' ? 'none' : 'underline');
+  const setText = (text: string) => setState(s => ({ ...s, text }));
+  const setFontSize = (size: number) => setState(s => ({ ...s, fontSize: size }));
+  const setFontFamily = (font: string) => setState(s => ({ ...s, fontFamily: font }));
+  const setColor = (color: string) => setState(s => ({ ...s, color }));
+  const setTextShadow = (shadow: string) => setState(s => ({ ...s, textShadow: shadow }));
+  const setTextRotation = (rotation: number) => setState(s => ({ ...s, textRotation: rotation }));
+  const setOpacity = (opacity: number) => setState(s => ({ ...s, opacity }));
+  const setImageRotation = (rotation: number) => setState(s => ({ ...s, imageRotation: rotation }));
+  const setBrightness = (brightness: number) => setState(s => ({ ...s, brightness }));
+  const setContrast = (contrast: number) => setState(s => ({ ...s, contrast }));
+  const setAspectRatio = (ratio: string) => setState(s => ({ ...s, aspectRatio: ratio }));
+  const toggleBold = () => setState(s => ({ ...s, fontWeight: s.fontWeight === 'bold' ? 'normal' : 'bold' }));
+  const toggleItalic = () => setState(s => ({ ...s, fontStyle: s.fontStyle === 'italic' ? 'normal' : 'italic' }));
+  const toggleUnderline = () => setState(s => ({ ...s, textDecoration: s.textDecoration === 'underline' ? 'none' : 'underline' }));
 
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden">
       <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" />
       <EditingPanel 
-        // Text props
-        text={text} setText={setText}
-        fontSize={fontSize} setFontSize={setFontSize}
-        fontFamily={fontFamily} setFontFamily={setFontFamily}
-        color={color} setColor={setColor}
-        textShadow={textShadow} setTextShadow={setTextShadow}
-        fontWeight={fontWeight} toggleBold={toggleBold}
-        fontStyle={fontStyle} toggleItalic={toggleItalic}
-        textDecoration={textDecoration} toggleUnderline={toggleUnderline}
-        textRotation={textRotation} setTextRotation={setTextRotation}
-        opacity={opacity} setOpacity={setOpacity}
-        // Image props
-        imageSrc={imageSrc}
-        imageRotation={imageRotation} setImageRotation={setImageRotation}
-        brightness={brightness} setBrightness={setBrightness}
-        contrast={contrast} setContrast={setContrast}
+        // State
+        text={state.text}
+        fontSize={state.fontSize}
+        fontFamily={state.fontFamily}
+        color={state.color}
+        textShadow={state.textShadow}
+        fontWeight={state.fontWeight}
+        fontStyle={state.fontStyle}
+        textDecoration={state.textDecoration}
+        textRotation={state.textRotation}
+        opacity={state.opacity}
+        imageSrc={state.imageSrc}
+        imageRotation={state.imageRotation}
+        brightness={state.brightness}
+        contrast={state.contrast}
+        aspectRatio={state.aspectRatio}
+        aiCategory={aiCategory}
+        
+        // Setters
+        setText={setText}
+        setFontSize={setFontSize}
+        setFontFamily={setFontFamily}
+        setColor={setColor}
+        setTextShadow={setTextShadow}
+        toggleBold={toggleBold}
+        toggleItalic={toggleItalic}
+        toggleUnderline={toggleUnderline}
+        setTextRotation={setTextRotation}
+        setOpacity={setOpacity}
+        setImageRotation={setImageRotation}
+        setBrightness={setBrightness}
+        setContrast={setContrast}
+        setAspectRatio={setAspectRatio}
+        setAiCategory={setAiCategory}
+        
+        // Actions
         handleEnhanceImage={handleEnhanceImage}
-        isEnhancing={isEnhancing}
-        imageInputRef={imageInputRef}
-        // Settings props
-        aspectRatio={aspectRatio} setAspectRatio={setAspectRatio}
-        aiCategory={aiCategory} setAiCategory={setAiCategory}
         handleAiSuggest={handleAiSuggest}
+        handleDownload={handleDownload}
+        undo={undo}
+        redo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+
+        // Action states
+        isEnhancing={isEnhancing}
         isLoadingAi={isLoadingAi}
         aiSuggestions={aiSuggestions}
-        handleDownload={handleDownload}
+        imageInputRef={imageInputRef}
       />
       <main className="flex-1 flex items-center justify-center p-4 md:p-8 bg-muted/30 dark:bg-muted/10 overflow-hidden">
-        {imageSrc ? (
+        {state.imageSrc ? (
             <Canvas 
             editorAreaRef={editorAreaRef}
-            imageSrc={imageSrc}
-            text={text}
+            imageSrc={state.imageSrc}
+            text={state.text}
             textStyles={textStyles}
             imageStyles={imageStyles}
-            aspectRatio={aspectRatio}
-            textRotation={textRotation}
+            aspectRatio={state.aspectRatio}
+            textRotation={state.textRotation}
             />
         ) : (
             <div className="w-full h-full flex flex-col items-center justify-center gap-4 border-2 border-dashed rounded-lg bg-background/50">
