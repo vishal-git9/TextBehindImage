@@ -1,8 +1,10 @@
+
 "use client";
 
+import { useState } from 'react';
 import {
   Bold, Italic, Underline, Wand2, Image as ImageIcon, Download,
-  Type, Paintbrush, Settings, RotateCw
+  Type, Paintbrush, Settings, RotateCw, ChevronsUpDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,13 +17,22 @@ import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { SuggestStyleOutput } from '@/ai/flows/suggest-style';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const popularFonts = [
-  'Poppins', 'Oswald', 'Bebas Neue', 'Pacifico', 'Inter', 'Raleway', 'Roboto', 'Roboto Mono', 'Montserrat', 'Lato',
-  'DM Serif Display', 'Anton', 'Lobster', 'Playfair Display', 'Nunito', 'Merriweather', 'Source Sans Pro', 'Ubuntu',
-  'Arial', 'Verdana', 'Helvetica', 'Tahoma', 'Trebuchet MS', 'Times New Roman', 'Georgia', 'Garamond', 'Courier New', 'Brush Script MT',
-  'Exo 2', 'Archivo', 'Josefin Sans', 'Comfortaa', 'Righteous', 'Caveat'
-];
+    'Poppins', 'Oswald', 'Bebas Neue', 'Pacifico', 'Inter', 'Raleway', 'Roboto', 'Roboto Mono', 'Montserrat', 'Lato',
+    'DM Serif Display', 'Anton', 'Lobster', 'Playfair Display', 'Nunito', 'Merriweather', 'Source Sans Pro', 'Ubuntu',
+    'Arial', 'Verdana', 'Helvetica', 'Tahoma', 'Trebuchet MS', 'Times New Roman', 'Georgia', 'Garamond', 'Courier New', 'Brush Script MT',
+    'Exo 2', 'Archivo', 'Josefin Sans', 'Comfortaa', 'Righteous', 'Caveat', 'Abril Fatface', 'Alegreya', 'Alfa Slab One', 'Amatic SC', 
+    'Archivo Black', 'Arvo', 'Bangers', 'Bitter', 'Cabin', 'Cardo', 'Cinzel', 'Cormorant Garamond', 'Domine', 'Dosis', 'Fjalla One', 
+    'Francois One', 'Indie Flower', 'Inconsolata', 'Josefin Slab', 'Karla', 'Libre Baskerville', 'Libre Franklin', 'Lora', 'Maven Pro', 
+    'Noto Sans', 'Noto Serif', 'Open Sans', 'PT Sans', 'PT Serif', 'Permanent Marker', 'Playfair Display SC', 'Quicksand', 'Roboto Slab', 
+    'Rubik', 'Slabo 27px', 'Source Code Pro', 'Space Mono', 'Spectral', 'Titillium Web', 'Varela Round', 'Vollkorn', 'Work Sans', 'Yanone Kaffeesatz'
+].sort();
 
 type EditingPanelProps = {
   // Text
@@ -61,6 +72,13 @@ export default function EditingPanel({
   handleEnhanceImage, isEnhancing, handleImageUpload, imageInputRef, aspectRatio, setAspectRatio,
   aiCategory, setAiCategory, handleAiSuggest, isLoadingAi, aiSuggestions, handleDownload
 }: EditingPanelProps) {
+  const [fontSearch, setFontSearch] = useState("");
+  const [isFontPopoverOpen, setIsFontPopoverOpen] = useState(false);
+
+  const filteredFonts = popularFonts.filter(font => 
+    font.toLowerCase().includes(fontSearch.toLowerCase())
+  );
+
   return (
     <Card className="w-full md:w-96 border-0 md:border-r rounded-none flex flex-col">
       <CardHeader>
@@ -85,14 +103,52 @@ export default function EditingPanel({
               <div className="space-y-4">
                  <div className="space-y-2">
                     <Label htmlFor="font-family">Font Family</Label>
-                    <Select value={fontFamily} onValueChange={setFontFamily}>
-                        <SelectTrigger id="font-family"><SelectValue placeholder="Select a font" /></SelectTrigger>
-                        <SelectContent>
-                        {popularFonts.sort().map((font) => (
-                            <SelectItem key={font} value={font} style={{ fontFamily: font }}>{font}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
+                    <Popover open={isFontPopoverOpen} onOpenChange={setIsFontPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={isFontPopoverOpen}
+                          className="w-full justify-between font-normal"
+                          style={{ fontFamily: fontFamily }}
+                        >
+                          <span className="truncate">{fontFamily}</span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                        <Input
+                          placeholder="Search font..."
+                          className="h-9 rounded-b-none border-x-0 border-t-0"
+                          value={fontSearch}
+                          onChange={(e) => setFontSearch(e.target.value)}
+                          aria-label="Search for a font"
+                        />
+                        <ScrollArea className="h-72">
+                          {filteredFonts.length > 0 ? (
+                            filteredFonts.map((font) => (
+                              <Button
+                                key={font}
+                                variant="ghost"
+                                className="w-full justify-start font-normal h-auto py-2"
+                                style={{ fontFamily: font }}
+                                onClick={() => {
+                                  setFontFamily(font);
+                                  setIsFontPopoverOpen(false);
+                                  setFontSearch('');
+                                }}
+                              >
+                                {font}
+                              </Button>
+                            ))
+                          ) : (
+                            <p className="p-4 text-center text-sm text-muted-foreground">
+                              No font found.
+                            </p>
+                          )}
+                        </ScrollArea>
+                      </PopoverContent>
+                    </Popover>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="font-size">Font Size: {fontSize}px</Label>
