@@ -231,7 +231,7 @@ export default function Editor() {
       />
       <main className="flex-1 flex items-center justify-center p-4 md:p-8 bg-muted/30 dark:bg-muted/10 overflow-hidden">
         {state.imageSrc ? (
-            <div className="relative w-full h-full flex flex-col items-center justify-center gap-4">
+            <div className="relative w-full h-full flex flex-col items-center gap-4">
               <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
                 <Canvas 
                   editorAreaRef={editorAreaRef}
