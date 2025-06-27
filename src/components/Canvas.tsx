@@ -36,9 +36,8 @@ export default function Canvas({ editorAreaRef, imageSrc, text, textStyles, imag
       <Image
         src={imageSrc}
         alt="Background"
-        layout="fill"
-        objectFit="cover"
-        className="pointer-events-none transition-all duration-300"
+        fill
+        className="object-cover pointer-events-none transition-all duration-300"
         style={imageStyles}
         data-ai-hint="landscape"
         key={imageSrc}
