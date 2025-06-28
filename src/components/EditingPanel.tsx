@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -157,6 +158,32 @@ export default function EditingPanel({
               </div>
               <Separator />
               <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>AI Style Helper</Label>
+                  <div className="flex space-x-2">
+                    <Input value={aiCategory} onChange={(e) => setAiCategory(e.target.value)} placeholder="e.g., 'Nature', 'Tech'"/>
+                    <Button onClick={handleAiSuggest} disabled={isLoadingAi}>
+                        <Wand2 className="mr-2 h-4 w-4" />
+                        {isLoadingAi ? 'Thinking...' : 'Suggest'}
+                    </Button>
+                  </div>
+                  {aiSuggestions && (
+                  <div className="space-y-2 p-3 bg-muted/50 rounded-lg">
+                      <p className="text-sm">Suggestion: <span className="font-bold">{aiSuggestions.fontFamily}</span></p>
+                      <div className="flex gap-2">
+                      {aiSuggestions.colorPalette.map((c) => (
+                          <button
+                          key={c}
+                          className="h-8 w-8 rounded-full border-2"
+                          style={{ backgroundColor: c }}
+                          onClick={() => setColor(c)}
+                          aria-label={`Set color to ${c}`}
+                          />
+                      ))}
+                      </div>
+                  </div>
+                  )}
+                </div>
                  <div className="space-y-2">
                     <Label htmlFor="font-family">Font Family</Label>
                     <Popover open={isFontPopoverOpen} onOpenChange={setIsFontPopoverOpen}>
@@ -297,33 +324,6 @@ export default function EditingPanel({
                             </SelectContent>
                         </Select>
                     </div>
-                </div>
-                <Separator />
-                <div className="space-y-4">
-                    <h3 className="text-lg font-medium">AI Style Helper</h3>
-                    <div className="flex space-x-2">
-                    <Input value={aiCategory} onChange={(e) => setAiCategory(e.target.value)} placeholder="e.g., 'Nature', 'Tech'"/>
-                    <Button onClick={handleAiSuggest} disabled={isLoadingAi}>
-                        <Wand2 className="mr-2 h-4 w-4" />
-                        {isLoadingAi ? 'Thinking...' : 'Suggest'}
-                    </Button>
-                    </div>
-                    {aiSuggestions && (
-                    <div className="space-y-2 p-3 bg-muted/50 rounded-lg">
-                        <p className="text-sm">Suggestion: <span className="font-bold">{aiSuggestions.fontFamily}</span></p>
-                        <div className="flex gap-2">
-                        {aiSuggestions.colorPalette.map((c) => (
-                            <button
-                            key={c}
-                            className="h-8 w-8 rounded-full border-2"
-                            style={{ backgroundColor: c }}
-                            onClick={() => setColor(c)}
-                            aria-label={`Set color to ${c}`}
-                            />
-                        ))}
-                        </div>
-                    </div>
-                    )}
                 </div>
             </CardContent>
           </TabsContent>
