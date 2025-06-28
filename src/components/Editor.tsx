@@ -177,7 +177,7 @@ export default function Editor() {
   const toggleUnderline = () => setState(s => ({ ...s, textDecoration: s.textDecoration === 'underline' ? 'none' : 'underline' }));
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+    <div className="flex flex-col md:flex-row md:h-screen bg-background">
       <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" />
       <EditingPanel 
         // State
@@ -229,10 +229,10 @@ export default function Editor() {
         aiSuggestions={aiSuggestions}
         imageInputRef={imageInputRef}
       />
-      <main className="flex-1 flex items-center justify-center p-4 md:p-8 bg-muted/30 dark:bg-muted/10 overflow-hidden">
+      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 bg-muted/30 dark:bg-muted/10 overflow-auto">
         {state.imageSrc ? (
-            <div className="relative w-full h-full flex flex-col items-center gap-4">
-              <div className="flex-1 w-full flex items-center justify-center overflow-hidden">
+            <div className="w-full max-w-full flex-grow flex flex-col items-center justify-center gap-4">
+              <div className="w-full flex-grow flex items-center justify-center">
                 <Canvas 
                   editorAreaRef={editorAreaRef}
                   imageSrc={state.imageSrc}
@@ -248,7 +248,7 @@ export default function Editor() {
               </Button>
             </div>
         ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-4 border-2 border-dashed rounded-lg bg-background/50">
+            <div className="w-full h-[50vh] md:h-full flex flex-col items-center justify-center gap-4 border-2 border-dashed rounded-lg bg-background/50">
                 <div className="text-center">
                     <h2 className="text-2xl font-bold">Start by adding an image</h2>
                     <p className="text-muted-foreground">Upload an image to begin your creation.</p>

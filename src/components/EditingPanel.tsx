@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -113,7 +112,7 @@ export default function EditingPanel({
   return (
     <Card className="w-full md:w-96 border-0 md:border-r rounded-none flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="font-headline text-3xl">Text Weaver</CardTitle>
+        <CardTitle className="font-headline text-2xl sm:text-3xl">Text Weaver</CardTitle>
         <div className="flex items-center gap-1">
           <TooltipProvider>
             <Tooltip>
