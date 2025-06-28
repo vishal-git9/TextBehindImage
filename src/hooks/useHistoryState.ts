@@ -1,14 +1,43 @@
 
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
-export const useHistoryState = <T>(initialState: T) => {
+export const useHistoryState = <T>(initialState: T, storageKey: string) => {
   const [history, setHistory] = useState<{ past: T[], present: T, future: T[] }>({
     past: [],
     present: initialState,
     future: [],
   });
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load state from localStorage on initial mount (client-side only)
+  useEffect(() => {
+    try {
+      const savedStateJSON = window.localStorage.getItem(storageKey);
+      if (savedStateJSON) {
+        const savedState = JSON.parse(savedStateJSON);
+        if (savedState.present) {
+          setHistory(savedState);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load state from localStorage", error);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, [storageKey]);
+
+  // Save state to localStorage whenever it changes, but only after initial load
+  useEffect(() => {
+    if (isLoaded) {
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify(history));
+      } catch (error) {
+        console.error("Failed to save state to localStorage", error);
+      }
+    }
+  }, [history, storageKey, isLoaded]);
 
   const setState = useCallback((action: T | ((prevState: T) => T)) => {
     setHistory(currentHistory => {

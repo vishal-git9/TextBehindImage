@@ -53,7 +53,7 @@ const initialState: EditorState = {
 
 export default function Editor() {
   const { toast } = useToast();
-  const { state, setState, undo, redo, canUndo, canRedo } = useHistoryState<EditorState>(initialState);
+  const { state, setState, undo, redo, canUndo, canRedo } = useHistoryState<EditorState>(initialState, 'text-weaver-state');
   
   const [aiCategory, setAiCategory] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<SuggestStyleOutput | null>(null);
