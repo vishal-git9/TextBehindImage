@@ -229,7 +229,7 @@ export default function Editor() {
         aiSuggestions={aiSuggestions}
         imageInputRef={imageInputRef}
       />
-      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 bg-muted/30 dark:bg-muted/10 overflow-auto">
+      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 bg-muted overflow-auto">
         {state.imageSrc ? (
             <div className="w-full max-w-full flex-grow flex flex-col items-center justify-center gap-4">
               <div className="w-full flex-grow flex items-center justify-center">
@@ -248,13 +248,14 @@ export default function Editor() {
               </Button>
             </div>
         ) : (
-            <div className="w-full h-[50vh] md:h-full flex flex-col items-center justify-center gap-4 border-2 border-dashed rounded-lg bg-background/50">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold">Start by adding an image</h2>
-                    <p className="text-muted-foreground">Upload an image to begin your creation.</p>
+            <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-center">
+                <UploadCloud className="h-16 w-16 text-muted-foreground/50" strokeWidth={1} />
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight">Start your creation</h2>
+                    <p className="text-muted-foreground">Upload an image to begin.</p>
                 </div>
-                <Button onClick={() => imageInputRef.current?.click()} size="lg">
-                    <UploadCloud className="mr-2"/>
+                <Button onClick={() => imageInputRef.current?.click()} size="lg" className="mt-4">
+                    <UploadCloud className="mr-2 h-4 w-4"/>
                     Upload Image
                 </Button>
             </div>
