@@ -42,6 +42,7 @@ type EditingPanelProps = {
   contrast: number;
   aspectRatio: string;
   aiCategory: string;
+  backgroundColor: string;
   
   // Setters
   onUpdateTextProperty: (property: keyof Omit<TextObject, 'id' | 'position'>, value: any) => void;
@@ -50,6 +51,7 @@ type EditingPanelProps = {
   setContrast: (contrast: number) => void;
   setAspectRatio: (ratio: string) => void;
   setAiCategory: (category: string) => void;
+  setBackgroundColor: (color: string) => void;
 
   // Actions
   onAddText: () => void;
@@ -78,7 +80,7 @@ const EditingPanel = ({
   handleEnhanceImage, isEnhancing, imageInputRef, aspectRatio, setAspectRatio,
   aiCategory, setAiCategory, handleAiSuggest, isLoadingAi, aiSuggestions,
   handleRemoveBackground, isRemovingBackground, handleClearForeground,
-  undo, redo, canUndo, canRedo
+  undo, redo, canUndo, canRedo, backgroundColor, setBackgroundColor
 }: EditingPanelProps) => {
   const [fontSearch, setFontSearch] = useState("");
   const [isFontPopoverOpen, setIsFontPopoverOpen] = useState(false);
@@ -144,7 +146,7 @@ const EditingPanel = ({
       <Tabs defaultValue="text" className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="mx-6">
           <TabsTrigger value="text" className="w-full"><Type className="mr-2" /> Text</TabsTrigger>
-          <TabsTrigger value="image" className="w-full" disabled={!imageSrc}><Paintbrush className="mr-2" /> Image</TabsTrigger>
+          <TabsTrigger value="image" className="w-full"><Paintbrush className="mr-2" /> Image</TabsTrigger>
           <TabsTrigger value="settings" className="w-full"><Settings className="mr-2" /> Settings</TabsTrigger>
         </TabsList>
 
@@ -307,49 +309,57 @@ const EditingPanel = ({
 
           <TabsContent value="image">
             <CardContent className="space-y-6 pt-6">
-                <div className="space-y-4">
-                    <div className="space-y-2">
-                        <Label className="flex items-center"><RotateCw className="mr-2 h-4 w-4" />Rotation</Label>
-                        <div className="flex justify-between gap-2">
-                            {[0, 90, 180, 270].map(deg => (
-                                <Button key={deg} variant={imageRotation === deg ? 'secondary' : 'outline'} onClick={() => setImageRotation(deg)} className="flex-1">{deg}°</Button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="brightness">Brightness: {brightness}%</Label>
-                        <Slider id="brightness" min={0} max={200} step={1} value={[brightness]} onValueChange={(v) => setBrightness(v[0])}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="contrast">Contrast: {contrast}%</Label>
-                        <Slider id="contrast" min={0} max={200} step={1} value={[contrast]} onValueChange={(v) => setContrast(v[0])}/>
-                    </div>
+                <div className="space-y-2">
+                    <Label htmlFor="bg-color">Background Color</Label>
+                    <Input id="bg-color" type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="p-1 h-10 w-full" />
                 </div>
-                <Separator />
-                <div className="space-y-4">
-                    <h3 className="text-sm font-medium">AI Tools</h3>
-                    <div className="space-y-2">
-                        <Button onClick={handleEnhanceImage} disabled={isEnhancing} className="w-full">
-                            <Wand2 className="mr-2 h-4 w-4" />
-                            {isEnhancing ? 'Enhancing...' : 'Enhance Image'}
-                        </Button>
-                        <Button onClick={handleRemoveBackground} disabled={isRemovingBackground} className="w-full">
-                            <Wand2 className="mr-2 h-4 w-4" />
-                            {isRemovingBackground ? 'Processing...' : 'Text Behind Object'}
-                        </Button>
-                         {foregroundSrc && (
-                            <Button onClick={handleClearForeground} variant="outline" className="w-full">
-                                <Trash2 className="mr-2 h-4 w-4" /> Reset Layers
-                            </Button>
-                        )}
-                        <p className="text-xs text-muted-foreground px-1">Place the main object on top of the text.</p>
-                    </div>
-                </div>
-                <Separator />
+                <Separator/>
                 <div className="space-y-2">
                     <Button variant="outline" className="w-full" onClick={() => imageInputRef.current?.click()}>
-                        <ImageIcon className="mr-2 h-4 w-4" /> Change Image
+                        <ImageIcon className="mr-2 h-4 w-4" /> {imageSrc ? 'Change Image' : 'Upload Image'}
                     </Button>
+                </div>
+                
+                <div className={cn(!imageSrc && "opacity-50 pointer-events-none")}>
+                    <Separator />
+                    <div className="space-y-4 pt-6">
+                        <div className="space-y-2">
+                            <Label className="flex items-center"><RotateCw className="mr-2 h-4 w-4" />Rotation</Label>
+                            <div className="flex justify-between gap-2">
+                                {[0, 90, 180, 270].map(deg => (
+                                    <Button key={deg} variant={imageRotation === deg ? 'secondary' : 'outline'} onClick={() => setImageRotation(deg)} className="flex-1">{deg}°</Button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="brightness">Brightness: {brightness}%</Label>
+                            <Slider id="brightness" min={0} max={200} step={1} value={[brightness]} onValueChange={(v) => setBrightness(v[0])}/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="contrast">Contrast: {contrast}%</Label>
+                            <Slider id="contrast" min={0} max={200} step={1} value={[contrast]} onValueChange={(v) => setContrast(v[0])}/>
+                        </div>
+                    </div>
+                    <Separator className="my-6" />
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-medium">AI Tools</h3>
+                        <div className="space-y-2">
+                            <Button onClick={handleEnhanceImage} disabled={isEnhancing} className="w-full">
+                                <Wand2 className="mr-2 h-4 w-4" />
+                                {isEnhancing ? 'Enhancing...' : 'Enhance Image'}
+                            </Button>
+                            <Button onClick={handleRemoveBackground} disabled={isRemovingBackground} className="w-full">
+                                <Wand2 className="mr-2 h-4 w-4" />
+                                {isRemovingBackground ? 'Processing...' : 'Text Behind Object'}
+                            </Button>
+                            {foregroundSrc && (
+                                <Button onClick={handleClearForeground} variant="outline" className="w-full">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Reset Layers
+                                </Button>
+                            )}
+                            <p className="text-xs text-muted-foreground px-1">Place the main object on top of the text.</p>
+                        </div>
+                    </div>
                 </div>
             </CardContent>
           </TabsContent>

@@ -18,6 +18,7 @@ type CanvasProps = {
   onDeselect: () => void;
   imageStyles: React.CSSProperties;
   aspectRatio: string;
+  backgroundColor: string;
 };
 
 const aspectRatioClasses: { [key: string]: string } = {
@@ -36,7 +37,8 @@ const Canvas = ({
   onTextDragStop,
   onDeselect,
   imageStyles, 
-  aspectRatio 
+  aspectRatio,
+  backgroundColor,
 }: CanvasProps) => {
 
   return (
@@ -44,20 +46,23 @@ const Canvas = ({
       id="editor-area"
       ref={editorAreaRef}
       className={cn(
-        "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-gray-900",
+        "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl",
         aspectRatioClasses[aspectRatio] || 'aspect-video'
       )}
+      style={{ backgroundColor }}
       onClick={onDeselect}
     >
-      <Image
-        src={imageSrc}
-        alt="Background"
-        fill
-        className="object-cover pointer-events-none transition-all duration-300"
-        style={imageStyles}
-        data-ai-hint="landscape"
-        key={imageSrc}
-      />
+      {imageSrc && (
+        <Image
+          src={imageSrc}
+          alt="Background"
+          fill
+          className="object-cover pointer-events-none transition-all duration-300"
+          style={imageStyles}
+          data-ai-hint="landscape"
+          key={imageSrc}
+        />
+      )}
       
       {texts.map((textObject) => (
         <DraggableText

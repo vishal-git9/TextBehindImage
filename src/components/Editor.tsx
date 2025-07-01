@@ -41,6 +41,7 @@ type EditorState = {
   brightness: number;
   contrast: number;
   aspectRatio: string;
+  backgroundColor: string;
 };
 
 const createDefaultText = (): TextObject => ({
@@ -68,6 +69,7 @@ const initialState: EditorState = {
   brightness: 100,
   contrast: 100,
   aspectRatio: 'original',
+  backgroundColor: '#111827',
 };
 
 
@@ -159,6 +161,7 @@ export default function Editor() {
             ...initialState,
             texts: [newText],
             imageSrc: event.target?.result as string,
+            backgroundColor: 'transparent',
             selectedTextId: newText.id,
         };
         resetState(newInitialState);
@@ -321,6 +324,7 @@ export default function Editor() {
   const setImageRotation = useCallback((rotation: number) => setState(s => ({ ...s, imageRotation: rotation })), [setState]);
   const setBrightness = useCallback((brightness: number) => setState(s => ({ ...s, brightness })), [setState]);
   const setContrast = useCallback((contrast: number) => setState(s => ({ ...s, contrast })), [setState]);
+  const setBackgroundColor = useCallback((color: string) => setState(s => ({ ...s, backgroundColor: color })), [setState]);
 
   return (
     <div className="flex flex-col md:flex-row md:h-screen bg-background">
@@ -336,6 +340,7 @@ export default function Editor() {
         contrast={state.contrast}
         aspectRatio={state.aspectRatio}
         aiCategory={aiCategory}
+        backgroundColor={state.backgroundColor}
         
         onUpdateTextProperty={handleUpdateTextProperty}
         setImageRotation={setImageRotation}
@@ -343,6 +348,7 @@ export default function Editor() {
         setContrast={setContrast}
         setAspectRatio={setAspectRatio}
         setAiCategory={setAiCategory}
+        setBackgroundColor={setBackgroundColor}
         
         onAddText={handleAddText}
         onDeleteText={handleDeleteText}
@@ -363,52 +369,39 @@ export default function Editor() {
         imageInputRef={imageInputRef}
       />
       <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 bg-muted overflow-auto">
-        {state.imageSrc ? (
-            <div className="w-full max-w-full flex-grow flex flex-col items-center justify-center gap-4">
-              <div className="w-full flex-grow flex items-center justify-center">
-                {isRemovingBackground ? (
-                    <div className={cn(
-                        "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-gray-900",
-                        aspectRatioClasses[state.aspectRatio] || 'aspect-video'
-                    )}>
-                        <Skeleton className="h-full w-full" />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-center p-4">
-                            <p className="text-white text-lg font-semibold">Processing Image...</p>
-                            <p className="text-white/80 text-sm mt-1">AI is analyzing your image to create layers.</p>
-                        </div>
+        <div className="w-full max-w-full flex-grow flex flex-col items-center justify-center gap-4">
+            <div className="w-full flex-grow flex items-center justify-center">
+            {isRemovingBackground ? (
+                <div className={cn(
+                    "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-gray-900",
+                    aspectRatioClasses[state.aspectRatio] || 'aspect-video'
+                )}>
+                    <Skeleton className="h-full w-full" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-center p-4">
+                        <p className="text-white text-lg font-semibold">Processing Image...</p>
+                        <p className="text-white/80 text-sm mt-1">AI is analyzing your image to create layers.</p>
                     </div>
-                ) : (
-                    <Canvas 
-                      editorAreaRef={editorAreaRef}
-                      imageSrc={state.imageSrc}
-                      foregroundSrc={state.foregroundSrc}
-                      texts={state.texts}
-                      selectedTextId={state.selectedTextId}
-                      onSelectText={handleSelectText}
-                      onTextDragStop={handleTextDragStop}
-                      onDeselect={handleDeselect}
-                      imageStyles={imageStyles}
-                      aspectRatio={state.aspectRatio}
-                    />
-                )}
-              </div>
-              <Button onClick={handleDownload} disabled={!state.imageSrc || isRemovingBackground} className="shrink-0">
-                  <Download className="mr-2 h-4 w-4" /> Download Image
-              </Button>
-            </div>
-        ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-center">
-                <UploadCloud className="h-16 w-16 text-muted-foreground/50" strokeWidth={1} />
-                <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight">Start your creation</h2>
-                    <p className="text-muted-foreground">Upload an image to begin.</p>
                 </div>
-                <Button onClick={() => imageInputRef.current?.click()} size="lg" className="mt-4">
-                    <UploadCloud className="mr-2 h-4 w-4"/>
-                    Upload Image
-                </Button>
+            ) : (
+                <Canvas 
+                    editorAreaRef={editorAreaRef}
+                    imageSrc={state.imageSrc}
+                    foregroundSrc={state.foregroundSrc}
+                    texts={state.texts}
+                    selectedTextId={state.selectedTextId}
+                    onSelectText={handleSelectText}
+                    onTextDragStop={handleTextDragStop}
+                    onDeselect={handleDeselect}
+                    imageStyles={imageStyles}
+                    aspectRatio={state.aspectRatio}
+                    backgroundColor={state.backgroundColor}
+                />
+            )}
             </div>
-        )}
+            <Button onClick={handleDownload} disabled={(state.texts.length === 0 && !state.imageSrc) || isRemovingBackground} className="shrink-0">
+                <Download className="mr-2 h-4 w-4" /> Download Image
+            </Button>
+        </div>
       </main>
     </div>
   );
