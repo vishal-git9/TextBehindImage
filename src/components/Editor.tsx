@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useRef, useCallback, useState, useMemo } from 'react';
+import { useRef, useCallback, useState, useMemo, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import { removeBackground } from '@imgly/background-removal';
 import { useGoogleFont } from '@/hooks/useGoogleFont';
@@ -71,21 +71,29 @@ const initialState: EditorState = {
 
 export default function Editor() {
   const { toast } = useToast();
-  const { state, setState, undo, redo, canUndo, canRedo } = useHistoryState<EditorState>(initialState, 'text-weaver-state-multi');
+  const { state, setState, resetState, undo, redo, canUndo, canRedo } = useHistoryState<EditorState>(initialState, 'text-weaver-state-multi');
   
   const [aiCategory, setAiCategory] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<SuggestStyleOutput | null>(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+  const [justUploaded, setJustUploaded] = useState(false);
 
   const editorAreaRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  // Set initial selected text
-  if (state.texts.length > 0 && !state.selectedTextId) {
-    setState(s => ({...s, selectedTextId: s.texts[0].id}));
-  }
+  useEffect(() => {
+    // If there are texts but none is selected, select the first one.
+    // This happens on initial load from fresh state.
+    if (state.texts.length > 0 && !state.selectedTextId) {
+        setState(s => ({...s, selectedTextId: s.texts[0].id}));
+    }
+    // If the selected text ID is no longer valid (e.g. after an undo), select the first one.
+    else if (state.selectedTextId && !state.texts.find(t => t.id === state.selectedTextId)) {
+        setState(s => ({...s, selectedTextId: s.texts[0]?.id ?? null}));
+    }
+  }, [state.texts, state.selectedTextId, setState]);
   
   const activeText = useMemo(() => {
     return state.texts.find(t => t.id === state.selectedTextId) || null;
@@ -118,7 +126,15 @@ export default function Editor() {
     if (e.target.files && e.target.files[0]) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setState(s => ({ ...s, imageSrc: event.target?.result as string, foregroundSrc: '' }));
+        const newText = createDefaultText();
+        const newInitialState: EditorState = {
+            ...initialState,
+            texts: [newText],
+            imageSrc: event.target?.result as string,
+            selectedTextId: newText.id,
+        };
+        resetState(newInitialState);
+        setJustUploaded(true);
       };
       reader.readAsDataURL(e.target.files[0]);
     }
@@ -173,7 +189,7 @@ export default function Editor() {
     }
   };
 
-  const handleRemoveBackground = async () => {
+  const handleRemoveBackground = useCallback(async () => {
     if (!state.imageSrc) return;
     setIsRemovingBackground(true);
     try {
@@ -182,8 +198,8 @@ export default function Editor() {
       reader.onloadend = () => {
         setState(s => ({ ...s, foregroundSrc: reader.result as string }));
         toast({
-          title: "Background Removed",
-          description: "The foreground has been layered on top of the text.",
+          title: "Object Layered",
+          description: "The main subject is now layered on top of the text.",
         });
       };
       reader.readAsDataURL(blob);
@@ -191,13 +207,20 @@ export default function Editor() {
       console.error("Background removal failed", error);
       toast({
         variant: "destructive",
-        title: "Background Removal Failed",
+        title: "Layering Failed",
         description: "Could not remove background. The image might be too complex or in an unsupported format.",
       });
     } finally {
       setIsRemovingBackground(false);
     }
-  };
+  }, [state.imageSrc, setState, toast]);
+
+  useEffect(() => {
+    if (justUploaded && state.imageSrc) {
+        handleRemoveBackground();
+        setJustUploaded(false); // Reset flag
+    }
+  }, [justUploaded, state.imageSrc, handleRemoveBackground]);
 
   const handleClearForeground = () => {
     setState(s => ({ ...s, foregroundSrc: '' }));

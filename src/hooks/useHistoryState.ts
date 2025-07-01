@@ -73,6 +73,14 @@ export const useHistoryState = <T>(initialState: T, storageKey: string) => {
     });
   }, []);
 
+  const resetState = useCallback((newState: T) => {
+    setHistory({
+      past: [],
+      present: newState,
+      future: [],
+    });
+  }, []);
+
   const undo = useCallback(() => {
     setHistory(currentHistory => {
       if (currentHistory.past.length === 0) {
@@ -108,6 +116,7 @@ export const useHistoryState = <T>(initialState: T, storageKey: string) => {
   return {
     state: history.present,
     setState,
+    resetState,
     undo,
     redo,
     canUndo: history.past.length > 0,
