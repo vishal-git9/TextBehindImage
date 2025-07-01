@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useRef, useCallback, useState, useMemo, useEffect } from 'react';
@@ -80,6 +81,7 @@ export default function Editor() {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [justUploaded, setJustUploaded] = useState(false);
+  const [naturalImageDimensions, setNaturalImageDimensions] = useState<{width: number, height: number} | null>(null);
 
   const editorAreaRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -162,10 +164,15 @@ export default function Editor() {
         };
         resetState(newInitialState);
         setJustUploaded(true);
+        setNaturalImageDimensions(null);
       };
       reader.readAsDataURL(e.target.files[0]);
     }
   };
+
+  const handleImageLoad = useCallback((dimensions: { width: number; height: number }) => {
+    setNaturalImageDimensions(dimensions);
+  }, []);
 
   const handleUpdateTextProperty = useCallback((property: keyof Omit<TextObject, 'id' | 'position'>, value: any) => {
     setState(s => {
@@ -278,6 +285,20 @@ export default function Editor() {
     filter: `brightness(${state.brightness}%) contrast(${state.contrast}%)`,
   }), [state.imageRotation, state.brightness, state.contrast]);
 
+  const containerStyle: React.CSSProperties = useMemo(() => {
+    if (state.aspectRatio === 'original' && naturalImageDimensions && naturalImageDimensions.width > 0 && naturalImageDimensions.height > 0) {
+      return {
+        aspectRatio: `${naturalImageDimensions.width} / ${naturalImageDimensions.height}`
+      };
+    }
+    if (state.aspectRatio === 'original' && !state.imageSrc) {
+        return {
+            aspectRatio: '16 / 9'
+        }
+    }
+    return {};
+  }, [state.aspectRatio, naturalImageDimensions, state.imageSrc]);
+
   const handleAddText = useCallback(() => {
     const newText = createDefaultText();
     setState(s => ({ ...s, texts: [...s.texts, newText], selectedTextId: newText.id }));
@@ -387,6 +408,8 @@ export default function Editor() {
                     onDeselect={handleDeselect}
                     imageStyles={imageStyles}
                     aspectRatio={state.aspectRatio}
+                    onImageLoad={handleImageLoad}
+                    containerStyle={containerStyle}
                 />
             )}
             </div>

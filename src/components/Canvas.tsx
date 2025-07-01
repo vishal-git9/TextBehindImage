@@ -18,6 +18,8 @@ type CanvasProps = {
   onDeselect: () => void;
   imageStyles: React.CSSProperties;
   aspectRatio: string;
+  onImageLoad?: (dimensions: { width: number; height: number }) => void;
+  containerStyle?: React.CSSProperties;
 };
 
 const aspectRatioClasses: { [key: string]: string } = {
@@ -37,6 +39,8 @@ const Canvas = ({
   onDeselect,
   imageStyles, 
   aspectRatio,
+  onImageLoad,
+  containerStyle,
 }: CanvasProps) => {
 
   return (
@@ -45,19 +49,24 @@ const Canvas = ({
       ref={editorAreaRef}
       className={cn(
         "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-card",
-        aspectRatioClasses[aspectRatio] || 'aspect-video'
+        aspectRatio !== 'original' && (aspectRatioClasses[aspectRatio] || 'aspect-video')
       )}
       onClick={onDeselect}
+      style={containerStyle}
     >
       {imageSrc && (
         <Image
           src={imageSrc}
           alt="Background"
           fill
-          className="object-cover pointer-events-none transition-all duration-300"
+          className="object-contain pointer-events-none transition-all duration-300"
           style={imageStyles}
           data-ai-hint="landscape"
           key={imageSrc}
+          onLoad={(e) => {
+            const img = e.target as HTMLImageElement;
+            onImageLoad?.({ width: img.naturalWidth, height: img.naturalHeight });
+          }}
         />
       )}
       
@@ -76,7 +85,7 @@ const Canvas = ({
             src={foregroundSrc}
             alt="Foreground Layer"
             fill
-            className="object-cover pointer-events-none transition-all duration-300"
+            className="object-contain pointer-events-none transition-all duration-300"
             style={imageStyles}
             key={foregroundSrc}
         />
