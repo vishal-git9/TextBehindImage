@@ -118,8 +118,17 @@ export default function Editor() {
     return state.texts.find(t => t.id === state.selectedTextId) || null;
   }, [state.texts, state.selectedTextId]);
 
-  useGoogleFont(activeText?.fontFamily);
-  state.texts.forEach(t => useGoogleFont(t.fontFamily));
+  const allFontFamilies = useMemo(() => {
+    const fontSet = new Set<string>();
+    state.texts.forEach(t => {
+      if (t.fontFamily) {
+        fontSet.add(t.fontFamily);
+      }
+    });
+    return Array.from(fontSet);
+  }, [state.texts]);
+
+  useGoogleFont(allFontFamilies);
 
   const handleDownload = useCallback(() => {
     if (editorAreaRef.current === null) {
