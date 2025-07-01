@@ -121,5 +121,6 @@ export const useHistoryState = <T>(initialState: T, storageKey: string) => {
     redo,
     canUndo: history.past.length > 0,
     canRedo: history.future.length > 0,
+    isLoaded,
   };
 };

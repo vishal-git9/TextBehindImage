@@ -60,8 +60,8 @@ const createDefaultText = (): TextObject => ({
 
 
 const initialState: EditorState = {
-  texts: [createDefaultText()],
-  selectedTextId: null, // Will be set to the first text's ID on mount
+  texts: [],
+  selectedTextId: null,
   imageSrc: '',
   foregroundSrc: '',
   imageRotation: 0,
@@ -73,7 +73,7 @@ const initialState: EditorState = {
 
 export default function Editor() {
   const { toast } = useToast();
-  const { state, setState, resetState, undo, redo, canUndo, canRedo } = useHistoryState<EditorState>(initialState, 'text-weaver-state-multi');
+  const { state, setState, resetState, undo, redo, canUndo, canRedo, isLoaded } = useHistoryState<EditorState>(initialState, 'text-weaver-state-multi');
   
   const [aiCategory, setAiCategory] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<SuggestStyleOutput | null>(null);
@@ -90,6 +90,17 @@ export default function Editor() {
     '4:3': 'aspect-[4/3]',
     '16:9': 'aspect-video',
   };
+
+  useEffect(() => {
+    if (isLoaded) {
+      // If after loading from storage, we have no image and no text, it's a fresh start.
+      if (state.imageSrc === '' && state.texts.length === 0) {
+        const defaultText = createDefaultText();
+        // Use resetState to set this as the new baseline without creating an "undo" step.
+        resetState({ ...initialState, texts: [defaultText], selectedTextId: defaultText.id });
+      }
+    }
+  }, [isLoaded, state.imageSrc, state.texts.length, resetState]);
 
   useEffect(() => {
     // If there are texts but none is selected, select the first one.
