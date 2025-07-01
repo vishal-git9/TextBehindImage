@@ -1,20 +1,22 @@
+
 "use client";
 
 import type React from 'react';
 import Image from 'next/image';
 import Draggable from 'react-draggable';
-import { type RefObject, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import type { TextObject } from './Editor';
 
 type CanvasProps = {
-  editorAreaRef: RefObject<HTMLDivElement>;
+  editorAreaRef: React.RefObject<HTMLDivElement>;
   imageSrc: string;
   foregroundSrc: string;
-  text: string;
-  textStyles: React.CSSProperties;
+  texts: TextObject[];
+  selectedTextId: string | null;
+  onSelectText: (id: string) => void;
+  onTextDragStop: (id: string, position: { x: number, y: number }) => void;
   imageStyles: React.CSSProperties;
   aspectRatio: string;
-  textRotation: number;
 };
 
 const aspectRatioClasses: { [key: string]: string } = {
@@ -23,8 +25,17 @@ const aspectRatioClasses: { [key: string]: string } = {
   '16:9': 'aspect-video',
 };
 
-export default function Canvas({ editorAreaRef, imageSrc, foregroundSrc, text, textStyles, imageStyles, aspectRatio, textRotation }: CanvasProps) {
-  const nodeRef = useRef(null);
+export default function Canvas({ 
+  editorAreaRef, 
+  imageSrc, 
+  foregroundSrc, 
+  texts, 
+  selectedTextId,
+  onSelectText,
+  onTextDragStop,
+  imageStyles, 
+  aspectRatio 
+}: CanvasProps) {
 
   return (
     <div
@@ -44,19 +55,48 @@ export default function Canvas({ editorAreaRef, imageSrc, foregroundSrc, text, t
         data-ai-hint="landscape"
         key={imageSrc}
       />
-      <Draggable bounds="parent" nodeRef={nodeRef}>
-        <div ref={nodeRef} className="absolute cursor-move">
-          <div
-            style={{
-              ...textStyles,
-              transform: `rotate(${textRotation}deg)`,
-            }}
-            className="select-none whitespace-pre-wrap"
+      
+      {texts.map((textObject) => {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const nodeRef = React.useRef(null);
+        return (
+          <Draggable
+            bounds="parent"
+            nodeRef={nodeRef}
+            key={textObject.id}
+            position={textObject.position}
+            onStop={(_, data) => onTextDragStop(textObject.id, { x: data.x, y: data.y })}
           >
-            {text}
-          </div>
-        </div>
-      </Draggable>
+            <div
+              ref={nodeRef}
+              className={cn(
+                "absolute cursor-move",
+                selectedTextId === textObject.id && "outline-dashed outline-2 outline-primary outline-offset-4"
+              )}
+              onClick={() => onSelectText(textObject.id)}
+              onMouseDownCapture={() => onSelectText(textObject.id)}
+            >
+              <div
+                style={{
+                  fontSize: `${textObject.fontSize}px`,
+                  fontFamily: `'${textObject.fontFamily}', sans-serif`,
+                  color: textObject.color,
+                  textShadow: textObject.textShadow,
+                  fontWeight: textObject.fontWeight,
+                  fontStyle: textObject.fontStyle,
+                  textDecoration: textObject.textDecoration,
+                  opacity: textObject.opacity,
+                  transform: `rotate(${textObject.textRotation}deg)`,
+                }}
+                className="select-none whitespace-pre-wrap"
+              >
+                {textObject.text}
+              </div>
+            </div>
+          </Draggable>
+        );
+      })}
+
       {foregroundSrc && (
          <Image
             src={foregroundSrc}

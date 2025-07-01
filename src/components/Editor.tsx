@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useMemo } from 'react';
 import { toPng } from 'html-to-image';
 import { removeBackground } from '@imgly/background-removal';
 import { useGoogleFont } from '@/hooks/useGoogleFont';
@@ -15,7 +15,8 @@ import { Download, UploadCloud } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useHistoryState } from '@/hooks/useHistoryState';
 
-type EditorState = {
+export type TextObject = {
+  id: string;
   text: string;
   fontSize: number;
   fontFamily: string;
@@ -26,6 +27,12 @@ type EditorState = {
   textDecoration: 'none' | 'underline';
   textRotation: number;
   opacity: number;
+  position: { x: number; y: number };
+};
+
+type EditorState = {
+  texts: TextObject[];
+  selectedTextId: string | null;
   imageSrc: string;
   foregroundSrc: string;
   imageRotation: number;
@@ -34,7 +41,8 @@ type EditorState = {
   aspectRatio: string;
 };
 
-const initialState: EditorState = {
+const createDefaultText = (): TextObject => ({
+  id: `text-${Date.now()}-${Math.random()}`,
   text: 'Your Text Here',
   fontSize: 72,
   fontFamily: 'Bebas Neue',
@@ -45,6 +53,13 @@ const initialState: EditorState = {
   textDecoration: 'none',
   textRotation: 0,
   opacity: 1,
+  position: { x: 50, y: 50 },
+});
+
+
+const initialState: EditorState = {
+  texts: [createDefaultText()],
+  selectedTextId: null, // Will be set to the first text's ID on mount
   imageSrc: '',
   foregroundSrc: '',
   imageRotation: 0,
@@ -56,7 +71,7 @@ const initialState: EditorState = {
 
 export default function Editor() {
   const { toast } = useToast();
-  const { state, setState, undo, redo, canUndo, canRedo } = useHistoryState<EditorState>(initialState, 'text-weaver-state');
+  const { state, setState, undo, redo, canUndo, canRedo } = useHistoryState<EditorState>(initialState, 'text-weaver-state-multi');
   
   const [aiCategory, setAiCategory] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<SuggestStyleOutput | null>(null);
@@ -67,7 +82,17 @@ export default function Editor() {
   const editorAreaRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  useGoogleFont(state.fontFamily);
+  // Set initial selected text
+  if (state.texts.length > 0 && !state.selectedTextId) {
+    setState(s => ({...s, selectedTextId: s.texts[0].id}));
+  }
+  
+  const activeText = useMemo(() => {
+    return state.texts.find(t => t.id === state.selectedTextId) || null;
+  }, [state.texts, state.selectedTextId]);
+
+  useGoogleFont(activeText?.fontFamily);
+  state.texts.forEach(t => useGoogleFont(t.fontFamily));
 
   const handleDownload = useCallback(() => {
     if (editorAreaRef.current === null) {
@@ -111,11 +136,10 @@ export default function Editor() {
     setIsLoadingAi(true);
     try {
         const result = await suggestStyle({ category: aiCategory });
-        setState(s => ({
-          ...s,
-          fontFamily: result.fontFamily,
-          color: result.colorPalette[0] || '#FFFFFF'
-        }));
+        if (state.selectedTextId) {
+            handleUpdateTextProperty('fontFamily', result.fontFamily);
+            handleUpdateTextProperty('color', result.colorPalette[0] || '#FFFFFF');
+        }
         setAiSuggestions(result);
     } catch (error) {
         toast({
@@ -183,52 +207,67 @@ export default function Editor() {
     });
   };
 
-  const textStyles: React.CSSProperties = {
-    fontSize: `${state.fontSize}px`,
-    fontFamily: `'${state.fontFamily}', sans-serif`,
-    color: state.color,
-    textShadow: state.textShadow,
-    fontWeight: state.fontWeight,
-    fontStyle: state.fontStyle,
-    textDecoration: state.textDecoration,
-    opacity: state.opacity,
-  };
-
   const imageStyles: React.CSSProperties = {
     transform: `rotate(${state.imageRotation}deg)`,
     filter: `brightness(${state.brightness}%) contrast(${state.contrast}%)`,
   };
 
-  const setText = (text: string) => setState(s => ({ ...s, text }));
-  const setFontSize = (size: number) => setState(s => ({ ...s, fontSize: size }));
-  const setFontFamily = (font: string) => setState(s => ({ ...s, fontFamily: font }));
-  const setColor = (color: string) => setState(s => ({ ...s, color }));
-  const setTextShadow = (shadow: string) => setState(s => ({ ...s, textShadow: shadow }));
-  const setTextRotation = (rotation: number) => setState(s => ({ ...s, textRotation: rotation }));
-  const setOpacity = (opacity: number) => setState(s => ({ ...s, opacity }));
+  const handleAddText = () => {
+    const newText = createDefaultText();
+    setState(s => ({ ...s, texts: [...s.texts, newText], selectedTextId: newText.id }));
+  };
+
+  const handleDeleteText = (id: string) => {
+    setState(s => {
+      const newTexts = s.texts.filter(t => t.id !== id);
+      let newSelectedId = s.selectedTextId;
+      if (s.selectedTextId === id) {
+        newSelectedId = newTexts.length > 0 ? newTexts[0].id : null;
+      }
+      return { ...s, texts: newTexts, selectedTextId: newSelectedId };
+    });
+  };
+
+  const handleSelectText = (id: string) => {
+    setState(s => ({ ...s, selectedTextId: id }));
+  };
+  
+  const handleUpdateTextProperty = (property: keyof Omit<TextObject, 'id' | 'position'>, value: any) => {
+    setState(s => {
+        const newTexts = s.texts.map(t => {
+            if (t.id === s.selectedTextId) {
+                return { ...t, [property]: value };
+            }
+            return t;
+        });
+        return { ...s, texts: newTexts };
+    });
+  };
+
+  const handleTextDragStop = (id: string, position: { x: number, y: number }) => {
+     setState(s => {
+        const newTexts = s.texts.map(t => {
+            if (t.id === id) {
+                return { ...t, position };
+            }
+            return t;
+        });
+        return { ...s, texts: newTexts };
+    });
+  };
+  
+  const setAspectRatio = (ratio: string) => setState(s => ({ ...s, aspectRatio: ratio }));
   const setImageRotation = (rotation: number) => setState(s => ({ ...s, imageRotation: rotation }));
   const setBrightness = (brightness: number) => setState(s => ({ ...s, brightness }));
   const setContrast = (contrast: number) => setState(s => ({ ...s, contrast }));
-  const setAspectRatio = (ratio: string) => setState(s => ({ ...s, aspectRatio: ratio }));
-  const toggleBold = () => setState(s => ({ ...s, fontWeight: s.fontWeight === 'bold' ? 'normal' : 'bold' }));
-  const toggleItalic = () => setState(s => ({ ...s, fontStyle: s.fontStyle === 'italic' ? 'normal' : 'italic' }));
-  const toggleUnderline = () => setState(s => ({ ...s, textDecoration: s.textDecoration === 'underline' ? 'none' : 'underline' }));
 
   return (
     <div className="flex flex-col md:flex-row md:h-screen bg-background">
       <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" />
       <EditingPanel 
-        // State
-        text={state.text}
-        fontSize={state.fontSize}
-        fontFamily={state.fontFamily}
-        color={state.color}
-        textShadow={state.textShadow}
-        fontWeight={state.fontWeight}
-        fontStyle={state.fontStyle}
-        textDecoration={state.textDecoration}
-        textRotation={state.textRotation}
-        opacity={state.opacity}
+        texts={state.texts}
+        selectedTextId={state.selectedTextId}
+        activeText={activeText}
         imageSrc={state.imageSrc}
         foregroundSrc={state.foregroundSrc}
         imageRotation={state.imageRotation}
@@ -237,24 +276,16 @@ export default function Editor() {
         aspectRatio={state.aspectRatio}
         aiCategory={aiCategory}
         
-        // Setters
-        setText={setText}
-        setFontSize={setFontSize}
-        setFontFamily={setFontFamily}
-        setColor={setColor}
-        setTextShadow={setTextShadow}
-        toggleBold={toggleBold}
-        toggleItalic={toggleItalic}
-        toggleUnderline={toggleUnderline}
-        setTextRotation={setTextRotation}
-        setOpacity={setOpacity}
+        onUpdateTextProperty={handleUpdateTextProperty}
         setImageRotation={setImageRotation}
         setBrightness={setBrightness}
         setContrast={setContrast}
         setAspectRatio={setAspectRatio}
         setAiCategory={setAiCategory}
         
-        // Actions
+        onAddText={handleAddText}
+        onDeleteText={handleDeleteText}
+        onSelectText={handleSelectText}
         handleEnhanceImage={handleEnhanceImage}
         handleAiSuggest={handleAiSuggest}
         handleRemoveBackground={handleRemoveBackground}
@@ -264,7 +295,6 @@ export default function Editor() {
         canUndo={canUndo}
         canRedo={canRedo}
 
-        // Action states
         isEnhancing={isEnhancing}
         isLoadingAi={isLoadingAi}
         isRemovingBackground={isRemovingBackground}
@@ -279,11 +309,12 @@ export default function Editor() {
                   editorAreaRef={editorAreaRef}
                   imageSrc={state.imageSrc}
                   foregroundSrc={state.foregroundSrc}
-                  text={state.text}
-                  textStyles={textStyles}
+                  texts={state.texts}
+                  selectedTextId={state.selectedTextId}
+                  onSelectText={handleSelectText}
+                  onTextDragStop={handleTextDragStop}
                   imageStyles={imageStyles}
                   aspectRatio={state.aspectRatio}
-                  textRotation={state.textRotation}
                 />
               </div>
               <Button onClick={handleDownload} disabled={!state.imageSrc} className="shrink-0">

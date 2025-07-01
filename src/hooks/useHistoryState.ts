@@ -18,7 +18,10 @@ export const useHistoryState = <T>(initialState: T, storageKey: string) => {
       if (savedStateJSON) {
         const savedState = JSON.parse(savedStateJSON);
         if (savedState.present) {
-          setHistory(savedState);
+          // A simple check to see if the state shape is roughly correct
+          if ('texts' in savedState.present && 'imageSrc' in savedState.present) {
+             setHistory(savedState);
+          }
         }
       }
     } catch (error)
