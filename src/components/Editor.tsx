@@ -382,13 +382,13 @@ export default function Editor() {
         aiSuggestions={aiSuggestions}
         imageInputRef={imageInputRef}
       />
-      <main className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 bg-muted overflow-auto">
+      <main className="flex-1 flex flex-col items-center justify-start p-4 md:p-8 bg-muted overflow-auto">
         <div className="w-full max-w-full flex-grow flex flex-col items-center justify-center gap-4">
             <div className="w-full flex-grow flex items-center justify-center">
             {isRemovingBackground ? (
                 <div className={cn(
                     "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-gray-900",
-                    aspectRatioClasses[state.aspectRatio] || 'aspect-video'
+                    state.aspectRatio !== 'original' && (aspectRatioClasses[state.aspectRatio] || 'aspect-video')
                 )}>
                     <Skeleton className="h-full w-full" />
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-center p-4">
