@@ -1,11 +1,11 @@
 
 "use client";
 
-import type React from 'react';
+import React from 'react';
 import Image from 'next/image';
-import Draggable from 'react-draggable';
 import { cn } from '@/lib/utils';
 import type { TextObject } from './Editor';
+import DraggableText from './DraggableText';
 
 type CanvasProps = {
   editorAreaRef: React.RefObject<HTMLDivElement>;
@@ -14,7 +14,7 @@ type CanvasProps = {
   texts: TextObject[];
   selectedTextId: string | null;
   onSelectText: (id: string) => void;
-  onTextDragStop: (id: string, position: { x: number, y: number }) => void;
+  onTextDragStop: (id:string, position: { x: number, y: number }) => void;
   imageStyles: React.CSSProperties;
   aspectRatio: string;
 };
@@ -56,46 +56,15 @@ export default function Canvas({
         key={imageSrc}
       />
       
-      {texts.map((textObject) => {
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const nodeRef = React.useRef(null);
-        return (
-          <Draggable
-            bounds="parent"
-            nodeRef={nodeRef}
-            key={textObject.id}
-            position={textObject.position}
-            onStop={(_, data) => onTextDragStop(textObject.id, { x: data.x, y: data.y })}
-          >
-            <div
-              ref={nodeRef}
-              className={cn(
-                "absolute cursor-move",
-                selectedTextId === textObject.id && "outline-dashed outline-2 outline-primary outline-offset-4"
-              )}
-              onClick={() => onSelectText(textObject.id)}
-              onMouseDownCapture={() => onSelectText(textObject.id)}
-            >
-              <div
-                style={{
-                  fontSize: `${textObject.fontSize}px`,
-                  fontFamily: `'${textObject.fontFamily}', sans-serif`,
-                  color: textObject.color,
-                  textShadow: textObject.textShadow,
-                  fontWeight: textObject.fontWeight,
-                  fontStyle: textObject.fontStyle,
-                  textDecoration: textObject.textDecoration,
-                  opacity: textObject.opacity,
-                  transform: `rotate(${textObject.textRotation}deg)`,
-                }}
-                className="select-none whitespace-pre-wrap"
-              >
-                {textObject.text}
-              </div>
-            </div>
-          </Draggable>
-        );
-      })}
+      {texts.map((textObject) => (
+        <DraggableText
+          key={textObject.id}
+          textObject={textObject}
+          isSelected={selectedTextId === textObject.id}
+          onSelect={onSelectText}
+          onDragStop={onTextDragStop}
+        />
+      ))}
 
       {foregroundSrc && (
          <Image
