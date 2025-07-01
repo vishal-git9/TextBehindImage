@@ -80,7 +80,6 @@ export default function Editor() {
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
-  const [justUploaded, setJustUploaded] = useState(false);
   const [naturalImageDimensions, setNaturalImageDimensions] = useState<{width: number, height: number} | null>(null);
 
   const editorAreaRef = useRef<HTMLDivElement>(null);
@@ -151,20 +150,58 @@ export default function Editor() {
       });
   }, [toast]);
 
+  const handleRemoveBackground = useCallback((imageToProcess: string) => {
+    if (!imageToProcess) {
+        toast({
+            variant: "destructive",
+            title: "No Image",
+            description: "Please upload an image first.",
+        });
+        return;
+    };
+    setIsRemovingBackground(true);
+
+    // Use setTimeout to allow the UI to update with the skeleton loader before the heavy task
+    setTimeout(async () => {
+      try {
+        const blob = await removeBackground(imageToProcess);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setState(s => ({ ...s, foregroundSrc: reader.result as string }));
+          toast({
+            title: "Object Layered",
+            description: "The main subject is now layered on top of the text.",
+          });
+          setIsRemovingBackground(false);
+        };
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        console.error("Background removal failed", error);
+        toast({
+          variant: "destructive",
+          title: "Layering Failed",
+          description: "Could not remove background. The image might be too complex or in an unsupported format.",
+        });
+        setIsRemovingBackground(false);
+      }
+    }, 50);
+  }, [setState, toast]);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const reader = new FileReader();
       reader.onload = (event) => {
+        const imageUrl = event.target?.result as string;
         const newText = createDefaultText();
         const newInitialState: EditorState = {
             ...initialState,
             texts: [newText],
-            imageSrc: event.target?.result as string,
+            imageSrc: imageUrl,
             selectedTextId: newText.id,
         };
         resetState(newInitialState);
-        setJustUploaded(true);
         setNaturalImageDimensions(null);
+        handleRemoveBackground(imageUrl);
       };
       reader.readAsDataURL(e.target.files[0]);
     }
@@ -235,43 +272,6 @@ export default function Editor() {
     }
   }, [state.imageSrc, setState, toast]);
 
-  const handleRemoveBackground = useCallback(() => {
-    if (!state.imageSrc) return;
-    setIsRemovingBackground(true);
-
-    // Use setTimeout to allow the UI to update with the skeleton loader before the heavy task
-    setTimeout(async () => {
-      try {
-        const blob = await removeBackground(state.imageSrc);
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setState(s => ({ ...s, foregroundSrc: reader.result as string }));
-          toast({
-            title: "Object Layered",
-            description: "The main subject is now layered on top of the text.",
-          });
-          setIsRemovingBackground(false);
-        };
-        reader.readAsDataURL(blob);
-      } catch (error) {
-        console.error("Background removal failed", error);
-        toast({
-          variant: "destructive",
-          title: "Layering Failed",
-          description: "Could not remove background. The image might be too complex or in an unsupported format.",
-        });
-        setIsRemovingBackground(false);
-      }
-    }, 50);
-  }, [state.imageSrc, setState, toast]);
-
-  useEffect(() => {
-    if (justUploaded && state.imageSrc) {
-        handleRemoveBackground();
-        setJustUploaded(false); // Reset flag
-    }
-  }, [justUploaded, state.imageSrc, handleRemoveBackground]);
-
   const handleClearForeground = useCallback(() => {
     setState(s => ({ ...s, foregroundSrc: '' }));
     toast({
@@ -283,6 +283,7 @@ export default function Editor() {
   const imageStyles: React.CSSProperties = useMemo(() => ({
     transform: `rotate(${state.imageRotation}deg)`,
     filter: `brightness(${state.brightness}%) contrast(${state.contrast}%)`,
+    objectFit: 'contain',
   }), [state.imageRotation, state.brightness, state.contrast]);
 
   const containerStyle: React.CSSProperties = useMemo(() => {
@@ -369,7 +370,7 @@ export default function Editor() {
         onSelectText={handleSelectText}
         handleEnhanceImage={handleEnhanceImage}
         handleAiSuggest={handleAiSuggest}
-        handleRemoveBackground={handleRemoveBackground}
+        handleRemoveBackground={() => handleRemoveBackground(state.imageSrc)}
         handleClearForeground={handleClearForeground}
         undo={undo}
         redo={redo}
@@ -382,13 +383,14 @@ export default function Editor() {
         aiSuggestions={aiSuggestions}
         imageInputRef={imageInputRef}
       />
-      <main className="flex-1 flex flex-col items-center justify-start p-4 md:p-8 bg-muted overflow-auto">
+      <main className="flex-1 flex flex-col items-start justify-start p-4 md:p-8 bg-muted overflow-auto">
         <div className="w-full max-w-full flex-grow flex flex-col items-center justify-center gap-4">
             <div className="w-full flex-grow flex items-center justify-center">
             {isRemovingBackground ? (
                 <div className={cn(
-                    "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-gray-900",
-                    state.aspectRatio !== 'original' && (aspectRatioClasses[state.aspectRatio] || 'aspect-video')
+                    "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-card",
+                    state.aspectRatio !== 'original' && (aspectRatioClasses[state.aspectRatio] || 'aspect-video'),
+                    containerStyle
                 )}>
                     <Skeleton className="h-full w-full" />
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-center p-4">
@@ -421,3 +423,5 @@ export default function Editor() {
     </div>
   );
 }
+
+    
