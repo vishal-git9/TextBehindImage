@@ -1,7 +1,6 @@
-
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Draggable from 'react-draggable';
 import { cn } from '@/lib/utils';
 import type { TextObject } from './Editor';
@@ -14,11 +13,26 @@ type DraggableTextProps = {
 };
 
 const DraggableText = ({ textObject, isSelected, onSelect, onDragStop }: DraggableTextProps) => {
-  const nodeRef = React.useRef(null);
+  const nodeRef = useRef(null);
+  const [position, setPosition] = useState(textObject.position);
+
+  // Keep local state in sync with external prop changes (e.g., from undo/redo)
+  useEffect(() => {
+    setPosition(textObject.position);
+  }, [textObject.position]);
 
   const handleSelect = (e: React.MouseEvent) => {
     e.stopPropagation();
     onSelect(textObject.id);
+  };
+
+  const handleDrag = (_: unknown, data: { x: number; y: number }) => {
+    setPosition({ x: data.x, y: data.y });
+  };
+
+  const handleStop = (_: unknown, data: { x: number; y: number }) => {
+    // Only update global state on stop to avoid flooding history
+    onDragStop(textObject.id, { x: data.x, y: data.y });
   };
 
   return (
@@ -26,8 +40,9 @@ const DraggableText = ({ textObject, isSelected, onSelect, onDragStop }: Draggab
       bounds="parent"
       nodeRef={nodeRef}
       key={textObject.id}
-      position={textObject.position}
-      onStop={(_, data) => onDragStop(textObject.id, { x: data.x, y: data.y })}
+      position={position}
+      onDrag={handleDrag}
+      onStop={handleStop}
     >
       <div
         ref={nodeRef}
