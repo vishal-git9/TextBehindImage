@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -53,10 +54,7 @@ const DraggableText = ({ textObject, isSelected, onSelect, onDragStop }: Draggab
     >
       <div
         ref={nodeRef}
-        className={cn(
-          "absolute cursor-move",
-          isSelected && "outline-dashed outline-2 outline-primary outline-offset-4"
-        )}
+        className={cn("absolute cursor-move")}
         onClick={handleSelect}
       >
         <div
