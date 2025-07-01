@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 type CanvasProps = {
   editorAreaRef: RefObject<HTMLDivElement>;
   imageSrc: string;
+  foregroundSrc: string;
   text: string;
   textStyles: React.CSSProperties;
   imageStyles: React.CSSProperties;
@@ -22,7 +23,7 @@ const aspectRatioClasses: { [key: string]: string } = {
   '16:9': 'aspect-video',
 };
 
-export default function Canvas({ editorAreaRef, imageSrc, text, textStyles, imageStyles, aspectRatio, textRotation }: CanvasProps) {
+export default function Canvas({ editorAreaRef, imageSrc, foregroundSrc, text, textStyles, imageStyles, aspectRatio, textRotation }: CanvasProps) {
   const nodeRef = useRef(null);
 
   return (
@@ -56,6 +57,16 @@ export default function Canvas({ editorAreaRef, imageSrc, text, textStyles, imag
           </div>
         </div>
       </Draggable>
+      {foregroundSrc && (
+         <Image
+            src={foregroundSrc}
+            alt="Foreground Layer"
+            fill
+            className="object-cover pointer-events-none transition-all duration-300"
+            style={imageStyles}
+            key={foregroundSrc}
+        />
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 
 import { useRef, useCallback, useState } from 'react';
 import { toPng } from 'html-to-image';
+import { removeBackground } from '@imgly/background-removal';
 import { useGoogleFont } from '@/hooks/useGoogleFont';
 import EditingPanel from './EditingPanel';
 import Canvas from './Canvas';
@@ -26,6 +27,7 @@ type EditorState = {
   textRotation: number;
   opacity: number;
   imageSrc: string;
+  foregroundSrc: string;
   imageRotation: number;
   brightness: number;
   contrast: number;
@@ -44,6 +46,7 @@ const initialState: EditorState = {
   textRotation: 0,
   opacity: 1,
   imageSrc: '',
+  foregroundSrc: '',
   imageRotation: 0,
   brightness: 100,
   contrast: 100,
@@ -59,6 +62,7 @@ export default function Editor() {
   const [aiSuggestions, setAiSuggestions] = useState<SuggestStyleOutput | null>(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
 
   const editorAreaRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -89,7 +93,7 @@ export default function Editor() {
     if (e.target.files && e.target.files[0]) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        setState(s => ({ ...s, imageSrc: event.target?.result as string }));
+        setState(s => ({ ...s, imageSrc: event.target?.result as string, foregroundSrc: '' }));
       };
       reader.readAsDataURL(e.target.files[0]);
     }
@@ -129,7 +133,7 @@ export default function Editor() {
     setIsEnhancing(true);
     try {
       const result = await enhanceImage({ imageDataUri: state.imageSrc });
-      setState(s => ({...s, imageSrc: result.enhancedImageDataUri }));
+      setState(s => ({...s, imageSrc: result.enhancedImageDataUri, foregroundSrc: '' }));
       toast({
         title: "Image Enhanced",
         description: "The AI has enhanced your image.",
@@ -143,6 +147,40 @@ export default function Editor() {
     } finally {
       setIsEnhancing(false);
     }
+  };
+
+  const handleRemoveBackground = async () => {
+    if (!state.imageSrc) return;
+    setIsRemovingBackground(true);
+    try {
+      const blob = await removeBackground(state.imageSrc);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setState(s => ({ ...s, foregroundSrc: reader.result as string }));
+        toast({
+          title: "Background Removed",
+          description: "The foreground has been layered on top of the text.",
+        });
+      };
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      console.error("Background removal failed", error);
+      toast({
+        variant: "destructive",
+        title: "Background Removal Failed",
+        description: "Could not remove background. The image might be too complex or in an unsupported format.",
+      });
+    } finally {
+      setIsRemovingBackground(false);
+    }
+  };
+
+  const handleClearForeground = () => {
+    setState(s => ({ ...s, foregroundSrc: '' }));
+    toast({
+      title: "Layers Reset",
+      description: "The foreground layer has been removed.",
+    });
   };
 
   const textStyles: React.CSSProperties = {
@@ -192,6 +230,7 @@ export default function Editor() {
         textRotation={state.textRotation}
         opacity={state.opacity}
         imageSrc={state.imageSrc}
+        foregroundSrc={state.foregroundSrc}
         imageRotation={state.imageRotation}
         brightness={state.brightness}
         contrast={state.contrast}
@@ -218,6 +257,8 @@ export default function Editor() {
         // Actions
         handleEnhanceImage={handleEnhanceImage}
         handleAiSuggest={handleAiSuggest}
+        handleRemoveBackground={handleRemoveBackground}
+        handleClearForeground={handleClearForeground}
         undo={undo}
         redo={redo}
         canUndo={canUndo}
@@ -226,6 +267,7 @@ export default function Editor() {
         // Action states
         isEnhancing={isEnhancing}
         isLoadingAi={isLoadingAi}
+        isRemovingBackground={isRemovingBackground}
         aiSuggestions={aiSuggestions}
         imageInputRef={imageInputRef}
       />
@@ -236,6 +278,7 @@ export default function Editor() {
                 <Canvas 
                   editorAreaRef={editorAreaRef}
                   imageSrc={state.imageSrc}
+                  foregroundSrc={state.foregroundSrc}
                   text={state.text}
                   textStyles={textStyles}
                   imageStyles={imageStyles}

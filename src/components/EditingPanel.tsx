@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import {
   Bold, Italic, Underline, Wand2, Image as ImageIcon,
-  Type, Paintbrush, Settings, RotateCw, ChevronsUpDown, Undo, Redo
+  Type, Paintbrush, Settings, RotateCw, ChevronsUpDown, Undo, Redo, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +41,7 @@ type EditingPanelProps = {
   textRotation: number;
   opacity: number;
   imageSrc: string;
+  foregroundSrc: string;
   imageRotation: number;
   brightness: number;
   contrast: number;
@@ -67,12 +68,15 @@ type EditingPanelProps = {
   // Actions
   handleEnhanceImage: () => void;
   handleAiSuggest: () => void;
+  handleRemoveBackground: () => void;
+  handleClearForeground: () => void;
   undo: () => void;
   redo: () => void;
   
   // Action states
   isEnhancing: boolean;
   isLoadingAi: boolean;
+  isRemovingBackground: boolean;
   aiSuggestions: SuggestStyleOutput | null;
   imageInputRef: React.RefObject<HTMLInputElement>;
   canUndo: boolean;
@@ -82,9 +86,10 @@ type EditingPanelProps = {
 export default function EditingPanel({
   text, setText, fontSize, setFontSize, fontFamily, setFontFamily, color, setColor, textShadow, setTextShadow,
   fontWeight, toggleBold, fontStyle, toggleItalic, textDecoration, toggleUnderline, textRotation, setTextRotation,
-  opacity, setOpacity, imageSrc, imageRotation, setImageRotation, brightness, setBrightness, contrast, setContrast,
+  opacity, setOpacity, imageSrc, foregroundSrc, imageRotation, setImageRotation, brightness, setBrightness, contrast, setContrast,
   handleEnhanceImage, isEnhancing, imageInputRef, aspectRatio, setAspectRatio,
   aiCategory, setAiCategory, handleAiSuggest, isLoadingAi, aiSuggestions,
+  handleRemoveBackground, isRemovingBackground, handleClearForeground,
   undo, redo, canUndo, canRedo
 }: EditingPanelProps) {
   const [fontSearch, setFontSearch] = useState("");
@@ -296,11 +301,27 @@ export default function EditingPanel({
                     </div>
                 </div>
                 <Separator />
+                <div className="space-y-4">
+                    <h3 className="text-sm font-medium">AI Tools</h3>
+                    <div className="space-y-2">
+                        <Button onClick={handleEnhanceImage} disabled={isEnhancing} className="w-full">
+                            <Wand2 className="mr-2 h-4 w-4" />
+                            {isEnhancing ? 'Enhancing...' : 'Enhance Image'}
+                        </Button>
+                        <Button onClick={handleRemoveBackground} disabled={isRemovingBackground} className="w-full">
+                            <Wand2 className="mr-2 h-4 w-4" />
+                            {isRemovingBackground ? 'Processing...' : 'Text Behind Object'}
+                        </Button>
+                         {foregroundSrc && (
+                            <Button onClick={handleClearForeground} variant="outline" className="w-full">
+                                <Trash2 className="mr-2 h-4 w-4" /> Reset Layers
+                            </Button>
+                        )}
+                        <p className="text-xs text-muted-foreground px-1">Place the main object on top of the text.</p>
+                    </div>
+                </div>
+                <Separator />
                 <div className="space-y-2">
-                    <Button onClick={handleEnhanceImage} disabled={isEnhancing} className="w-full">
-                        <Wand2 className="mr-2 h-4 w-4" />
-                        {isEnhancing ? 'Enhancing...' : 'Enhance Image'}
-                    </Button>
                     <Button variant="outline" className="w-full" onClick={() => imageInputRef.current?.click()}>
                         <ImageIcon className="mr-2 h-4 w-4" /> Change Image
                     </Button>
