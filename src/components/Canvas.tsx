@@ -15,6 +15,7 @@ type CanvasProps = {
   selectedTextId: string | null;
   onSelectText: (id: string) => void;
   onTextDragStop: (id:string, position: { x: number, y: number }) => void;
+  onDeselect: () => void;
   imageStyles: React.CSSProperties;
   aspectRatio: string;
 };
@@ -25,7 +26,7 @@ const aspectRatioClasses: { [key: string]: string } = {
   '16:9': 'aspect-video',
 };
 
-export default function Canvas({ 
+const Canvas = ({ 
   editorAreaRef, 
   imageSrc, 
   foregroundSrc, 
@@ -33,9 +34,10 @@ export default function Canvas({
   selectedTextId,
   onSelectText,
   onTextDragStop,
+  onDeselect,
   imageStyles, 
   aspectRatio 
-}: CanvasProps) {
+}: CanvasProps) => {
 
   return (
     <div
@@ -45,6 +47,7 @@ export default function Canvas({
         "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-gray-900",
         aspectRatioClasses[aspectRatio] || 'aspect-video'
       )}
+      onClick={onDeselect}
     >
       <Image
         src={imageSrc}
@@ -79,3 +82,5 @@ export default function Canvas({
     </div>
   );
 }
+
+export default React.memo(Canvas);

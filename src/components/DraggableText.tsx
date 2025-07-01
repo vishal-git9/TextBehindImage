@@ -13,8 +13,13 @@ type DraggableTextProps = {
   onDragStop: (id: string, position: { x: number, y: number }) => void;
 };
 
-export default function DraggableText({ textObject, isSelected, onSelect, onDragStop }: DraggableTextProps) {
+const DraggableText = ({ textObject, isSelected, onSelect, onDragStop }: DraggableTextProps) => {
   const nodeRef = React.useRef(null);
+
+  const handleSelect = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onSelect(textObject.id);
+  };
 
   return (
     <Draggable
@@ -30,8 +35,8 @@ export default function DraggableText({ textObject, isSelected, onSelect, onDrag
           "absolute cursor-move",
           isSelected && "outline-dashed outline-2 outline-primary outline-offset-4"
         )}
-        onClick={() => onSelect(textObject.id)}
-        onMouseDownCapture={() => onSelect(textObject.id)}
+        onClick={handleSelect}
+        onMouseDownCapture={handleSelect}
       >
         <div
           style={{
@@ -53,3 +58,5 @@ export default function DraggableText({ textObject, isSelected, onSelect, onDrag
     </Draggable>
   );
 }
+
+export default React.memo(DraggableText);

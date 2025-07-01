@@ -168,7 +168,19 @@ export default function Editor() {
     }
   };
 
-  const handleAiSuggest = async () => {
+  const handleUpdateTextProperty = useCallback((property: keyof Omit<TextObject, 'id' | 'position'>, value: any) => {
+    setState(s => {
+        const newTexts = s.texts.map(t => {
+            if (t.id === s.selectedTextId) {
+                return { ...t, [property]: value };
+            }
+            return t;
+        });
+        return { ...s, texts: newTexts };
+    });
+  }, [setState]);
+
+  const handleAiSuggest = useCallback(async () => {
     if (!aiCategory) {
         toast({
             variant: "destructive",
@@ -194,9 +206,9 @@ export default function Editor() {
     } finally {
         setIsLoadingAi(false);
     }
-  };
+  }, [aiCategory, state.selectedTextId, toast, handleUpdateTextProperty]);
   
-  const handleEnhanceImage = async () => {
+  const handleEnhanceImage = useCallback(async () => {
     if (!state.imageSrc) return;
     setIsEnhancing(true);
     try {
@@ -215,7 +227,7 @@ export default function Editor() {
     } finally {
       setIsEnhancing(false);
     }
-  };
+  }, [state.imageSrc, setState, toast]);
 
   const handleRemoveBackground = useCallback(async () => {
     if (!state.imageSrc) return;
@@ -250,25 +262,25 @@ export default function Editor() {
     }
   }, [justUploaded, state.imageSrc, handleRemoveBackground]);
 
-  const handleClearForeground = () => {
+  const handleClearForeground = useCallback(() => {
     setState(s => ({ ...s, foregroundSrc: '' }));
     toast({
       title: "Layers Reset",
       description: "The foreground layer has been removed.",
     });
-  };
+  }, [setState, toast]);
 
-  const imageStyles: React.CSSProperties = {
+  const imageStyles: React.CSSProperties = useMemo(() => ({
     transform: `rotate(${state.imageRotation}deg)`,
     filter: `brightness(${state.brightness}%) contrast(${state.contrast}%)`,
-  };
+  }), [state.imageRotation, state.brightness, state.contrast]);
 
-  const handleAddText = () => {
+  const handleAddText = useCallback(() => {
     const newText = createDefaultText();
     setState(s => ({ ...s, texts: [...s.texts, newText], selectedTextId: newText.id }));
-  };
+  }, [setState]);
 
-  const handleDeleteText = (id: string) => {
+  const handleDeleteText = useCallback((id: string) => {
     setState(s => {
       const newTexts = s.texts.filter(t => t.id !== id);
       let newSelectedId = s.selectedTextId;
@@ -277,25 +289,19 @@ export default function Editor() {
       }
       return { ...s, texts: newTexts, selectedTextId: newSelectedId };
     });
-  };
+  }, [setState]);
 
-  const handleSelectText = (id: string) => {
+  const handleSelectText = useCallback((id: string) => {
     setState(s => ({ ...s, selectedTextId: id }));
-  };
+  }, [setState]);
   
-  const handleUpdateTextProperty = (property: keyof Omit<TextObject, 'id' | 'position'>, value: any) => {
-    setState(s => {
-        const newTexts = s.texts.map(t => {
-            if (t.id === s.selectedTextId) {
-                return { ...t, [property]: value };
-            }
-            return t;
-        });
-        return { ...s, texts: newTexts };
-    });
-  };
+  const handleDeselect = useCallback(() => {
+    if (state.selectedTextId) {
+      setState(s => ({...s, selectedTextId: null}));
+    }
+  }, [state.selectedTextId, setState]);
 
-  const handleTextDragStop = (id: string, position: { x: number, y: number }) => {
+  const handleTextDragStop = useCallback((id: string, position: { x: number, y: number }) => {
      setState(s => {
         const newTexts = s.texts.map(t => {
             if (t.id === id) {
@@ -305,12 +311,12 @@ export default function Editor() {
         });
         return { ...s, texts: newTexts };
     });
-  };
+  }, [setState]);
   
-  const setAspectRatio = (ratio: string) => setState(s => ({ ...s, aspectRatio: ratio }));
-  const setImageRotation = (rotation: number) => setState(s => ({ ...s, imageRotation: rotation }));
-  const setBrightness = (brightness: number) => setState(s => ({ ...s, brightness }));
-  const setContrast = (contrast: number) => setState(s => ({ ...s, contrast }));
+  const setAspectRatio = useCallback((ratio: string) => setState(s => ({ ...s, aspectRatio: ratio })), [setState]);
+  const setImageRotation = useCallback((rotation: number) => setState(s => ({ ...s, imageRotation: rotation })), [setState]);
+  const setBrightness = useCallback((brightness: number) => setState(s => ({ ...s, brightness })), [setState]);
+  const setContrast = useCallback((contrast: number) => setState(s => ({ ...s, contrast })), [setState]);
 
   return (
     <div className="flex flex-col md:flex-row md:h-screen bg-background">
@@ -376,6 +382,7 @@ export default function Editor() {
                       selectedTextId={state.selectedTextId}
                       onSelectText={handleSelectText}
                       onTextDragStop={handleTextDragStop}
+                      onDeselect={handleDeselect}
                       imageStyles={imageStyles}
                       aspectRatio={state.aspectRatio}
                     />

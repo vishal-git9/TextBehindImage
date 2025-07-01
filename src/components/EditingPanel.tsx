@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Bold, Italic, Underline, Wand2, Image as ImageIcon,
   Type, Paintbrush, Settings, RotateCw, ChevronsUpDown, Undo, Redo, Trash2, Plus
@@ -72,14 +72,14 @@ type EditingPanelProps = {
   canRedo: boolean;
 };
 
-export default function EditingPanel({
+const EditingPanel = ({
   texts, selectedTextId, activeText, onUpdateTextProperty, onAddText, onDeleteText, onSelectText,
   imageSrc, foregroundSrc, imageRotation, setImageRotation, brightness, setBrightness, contrast, setContrast,
   handleEnhanceImage, isEnhancing, imageInputRef, aspectRatio, setAspectRatio,
   aiCategory, setAiCategory, handleAiSuggest, isLoadingAi, aiSuggestions,
   handleRemoveBackground, isRemovingBackground, handleClearForeground,
   undo, redo, canUndo, canRedo
-}: EditingPanelProps) {
+}: EditingPanelProps) => {
   const [fontSearch, setFontSearch] = useState("");
   const [isFontPopoverOpen, setIsFontPopoverOpen] = useState(false);
   const [visibleFontCount, setVisibleFontCount] = useState(50);
@@ -378,3 +378,5 @@ export default function EditingPanel({
     </Card>
   );
 }
+
+export default React.memo(EditingPanel);
