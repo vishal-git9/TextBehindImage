@@ -26,6 +26,12 @@ const DraggableText = ({ textObject, isSelected, onSelect, onDragStop }: Draggab
     onSelect(textObject.id);
   };
 
+  const handleStart = () => {
+    if (!isSelected) {
+      onSelect(textObject.id);
+    }
+  };
+
   const handleDrag = (_: unknown, data: { x: number; y: number }) => {
     setPosition({ x: data.x, y: data.y });
   };
@@ -41,6 +47,7 @@ const DraggableText = ({ textObject, isSelected, onSelect, onDragStop }: Draggab
       nodeRef={nodeRef}
       key={textObject.id}
       position={position}
+      onStart={handleStart}
       onDrag={handleDrag}
       onStop={handleStop}
     >
@@ -51,7 +58,6 @@ const DraggableText = ({ textObject, isSelected, onSelect, onDragStop }: Draggab
           isSelected && "outline-dashed outline-2 outline-primary outline-offset-4"
         )}
         onClick={handleSelect}
-        onMouseDownCapture={handleSelect}
       >
         <div
           style={{
