@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Download, UploadCloud } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useHistoryState } from '@/hooks/useHistoryState';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export type TextObject = {
   id: string;
@@ -82,6 +84,12 @@ export default function Editor() {
 
   const editorAreaRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const aspectRatioClasses: { [key: string]: string } = {
+    '1:1': 'aspect-square',
+    '4:3': 'aspect-[4/3]',
+    '16:9': 'aspect-video',
+  };
 
   useEffect(() => {
     // If there are texts but none is selected, select the first one.
@@ -328,19 +336,32 @@ export default function Editor() {
         {state.imageSrc ? (
             <div className="w-full max-w-full flex-grow flex flex-col items-center justify-center gap-4">
               <div className="w-full flex-grow flex items-center justify-center">
-                <Canvas 
-                  editorAreaRef={editorAreaRef}
-                  imageSrc={state.imageSrc}
-                  foregroundSrc={state.foregroundSrc}
-                  texts={state.texts}
-                  selectedTextId={state.selectedTextId}
-                  onSelectText={handleSelectText}
-                  onTextDragStop={handleTextDragStop}
-                  imageStyles={imageStyles}
-                  aspectRatio={state.aspectRatio}
-                />
+                {isRemovingBackground ? (
+                    <div className={cn(
+                        "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-gray-900",
+                        aspectRatioClasses[state.aspectRatio] || 'aspect-video'
+                    )}>
+                        <Skeleton className="h-full w-full" />
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-center p-4">
+                            <p className="text-white text-lg font-semibold">Processing Image...</p>
+                            <p className="text-white/80 text-sm mt-1">AI is analyzing your image to create layers.</p>
+                        </div>
+                    </div>
+                ) : (
+                    <Canvas 
+                      editorAreaRef={editorAreaRef}
+                      imageSrc={state.imageSrc}
+                      foregroundSrc={state.foregroundSrc}
+                      texts={state.texts}
+                      selectedTextId={state.selectedTextId}
+                      onSelectText={handleSelectText}
+                      onTextDragStop={handleTextDragStop}
+                      imageStyles={imageStyles}
+                      aspectRatio={state.aspectRatio}
+                    />
+                )}
               </div>
-              <Button onClick={handleDownload} disabled={!state.imageSrc} className="shrink-0">
+              <Button onClick={handleDownload} disabled={!state.imageSrc || isRemovingBackground} className="shrink-0">
                   <Download className="mr-2 h-4 w-4" /> Download Image
               </Button>
             </div>
