@@ -21,22 +21,30 @@ export const useHistoryState = <T>(initialState: T, storageKey: string) => {
           setHistory(savedState);
         }
       }
-    } catch (error) {
-      console.error("Failed to load state from localStorage", error);
-    } finally {
+    } catch (error)
+      {/* Do nothing, user might be in a private browser window. */}
+     finally {
       setIsLoaded(true);
     }
   }, [storageKey]);
 
-  // Save state to localStorage whenever it changes, but only after initial load
+  // Debounced save to localStorage
   useEffect(() => {
-    if (isLoaded) {
+    if (!isLoaded) {
+      return;
+    }
+
+    const handler = setTimeout(() => {
       try {
         window.localStorage.setItem(storageKey, JSON.stringify(history));
       } catch (error) {
-        console.error("Failed to save state to localStorage", error);
+         {/* Do nothing, user might be in a private browser window. */}
       }
-    }
+    }, 500); // 500ms debounce delay
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [history, storageKey, isLoaded]);
 
   const setState = useCallback((action: T | ((prevState: T) => T)) => {
