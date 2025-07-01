@@ -229,30 +229,34 @@ export default function Editor() {
     }
   }, [state.imageSrc, setState, toast]);
 
-  const handleRemoveBackground = useCallback(async () => {
+  const handleRemoveBackground = useCallback(() => {
     if (!state.imageSrc) return;
     setIsRemovingBackground(true);
-    try {
-      const blob = await removeBackground(state.imageSrc);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setState(s => ({ ...s, foregroundSrc: reader.result as string }));
+
+    // Use setTimeout to allow the UI to update with the skeleton loader before the heavy task
+    setTimeout(async () => {
+      try {
+        const blob = await removeBackground(state.imageSrc);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setState(s => ({ ...s, foregroundSrc: reader.result as string }));
+          toast({
+            title: "Object Layered",
+            description: "The main subject is now layered on top of the text.",
+          });
+          setIsRemovingBackground(false);
+        };
+        reader.readAsDataURL(blob);
+      } catch (error) {
+        console.error("Background removal failed", error);
         toast({
-          title: "Object Layered",
-          description: "The main subject is now layered on top of the text.",
+          variant: "destructive",
+          title: "Layering Failed",
+          description: "Could not remove background. The image might be too complex or in an unsupported format.",
         });
-      };
-      reader.readAsDataURL(blob);
-    } catch (error) {
-      console.error("Background removal failed", error);
-      toast({
-        variant: "destructive",
-        title: "Layering Failed",
-        description: "Could not remove background. The image might be too complex or in an unsupported format.",
-      });
-    } finally {
-      setIsRemovingBackground(false);
-    }
+        setIsRemovingBackground(false);
+      }
+    }, 50);
   }, [state.imageSrc, setState, toast]);
 
   useEffect(() => {

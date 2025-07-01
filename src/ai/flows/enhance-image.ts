@@ -39,7 +39,7 @@ const enhanceImageFlow = ai.defineFlow(
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: [
         { media: { url: input.imageDataUri } },
-        { text: 'Subtly enhance this image. Improve lighting, colors, and sharpness to make it look more professional and appealing, but keep it realistic.' },
+        { text: 'Subtly enhance this image. Improve lighting, colors, and sharpness to make it look more professional and appealing, but keep it realistic. Crucially, the output image MUST have the exact same dimensions as the input image.' },
       ],
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
