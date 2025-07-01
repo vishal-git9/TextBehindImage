@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useRef, useCallback, useState, useMemo, useEffect } from 'react';
@@ -11,7 +10,7 @@ import { suggestStyle, type SuggestStyleOutput } from '@/ai/flows/suggest-style'
 import { enhanceImage } from '@/ai/flows/enhance-image';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
-import { Download, UploadCloud } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useHistoryState } from '@/hooks/useHistoryState';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -41,7 +40,6 @@ type EditorState = {
   brightness: number;
   contrast: number;
   aspectRatio: string;
-  backgroundColor: string;
 };
 
 const createDefaultText = (): TextObject => ({
@@ -69,7 +67,6 @@ const initialState: EditorState = {
   brightness: 100,
   contrast: 100,
   aspectRatio: 'original',
-  backgroundColor: '#111827',
 };
 
 
@@ -161,7 +158,6 @@ export default function Editor() {
             ...initialState,
             texts: [newText],
             imageSrc: event.target?.result as string,
-            backgroundColor: 'transparent',
             selectedTextId: newText.id,
         };
         resetState(newInitialState);
@@ -324,9 +320,6 @@ export default function Editor() {
   const setImageRotation = useCallback((rotation: number) => setState(s => ({ ...s, imageRotation: rotation })), [setState]);
   const setBrightness = useCallback((brightness: number) => setState(s => ({ ...s, brightness })), [setState]);
   const setContrast = useCallback((contrast: number) => setState(s => ({ ...s, contrast })), [setState]);
-  const setBackgroundColor = useCallback((color: string) => {
-    setState(s => ({ ...s, backgroundColor: color }));
-  }, [setState]);
 
   return (
     <div className="flex flex-col md:flex-row md:h-screen bg-background">
@@ -342,7 +335,6 @@ export default function Editor() {
         contrast={state.contrast}
         aspectRatio={state.aspectRatio}
         aiCategory={aiCategory}
-        backgroundColor={state.backgroundColor}
         
         onUpdateTextProperty={handleUpdateTextProperty}
         setImageRotation={setImageRotation}
@@ -350,7 +342,6 @@ export default function Editor() {
         setContrast={setContrast}
         setAspectRatio={setAspectRatio}
         setAiCategory={setAiCategory}
-        setBackgroundColor={setBackgroundColor}
         
         onAddText={handleAddText}
         onDeleteText={handleDeleteText}
@@ -396,7 +387,6 @@ export default function Editor() {
                     onDeselect={handleDeselect}
                     imageStyles={imageStyles}
                     aspectRatio={state.aspectRatio}
-                    backgroundColor={state.backgroundColor}
                 />
             )}
             </div>

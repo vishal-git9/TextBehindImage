@@ -42,7 +42,6 @@ type EditingPanelProps = {
   contrast: number;
   aspectRatio: string;
   aiCategory: string;
-  backgroundColor: string;
   
   // Setters
   onUpdateTextProperty: (property: keyof Omit<TextObject, 'id' | 'position'>, value: any) => void;
@@ -51,7 +50,6 @@ type EditingPanelProps = {
   setContrast: (contrast: number) => void;
   setAspectRatio: (ratio: string) => void;
   setAiCategory: (category: string) => void;
-  setBackgroundColor: (color: string) => void;
 
   // Actions
   onAddText: () => void;
@@ -80,7 +78,7 @@ const EditingPanel = ({
   handleEnhanceImage, isEnhancing, imageInputRef, aspectRatio, setAspectRatio,
   aiCategory, setAiCategory, handleAiSuggest, isLoadingAi, aiSuggestions,
   handleRemoveBackground, isRemovingBackground, handleClearForeground,
-  undo, redo, canUndo, canRedo, backgroundColor, setBackgroundColor
+  undo, redo, canUndo, canRedo
 }: EditingPanelProps) => {
   const [fontSearch, setFontSearch] = useState("");
   const [isFontPopoverOpen, setIsFontPopoverOpen] = useState(false);
@@ -309,11 +307,6 @@ const EditingPanel = ({
 
           <TabsContent value="image">
             <CardContent className="space-y-6 pt-6">
-                <div className="space-y-2">
-                    <Label htmlFor="bg-color">Background Color</Label>
-                    <Input id="bg-color" type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} className="p-1 h-10 w-full" />
-                </div>
-                <Separator/>
                 <div className="space-y-2">
                     <Button variant="outline" className="w-full" onClick={() => imageInputRef.current?.click()}>
                         <ImageIcon className="mr-2 h-4 w-4" /> {imageSrc ? 'Change Image' : 'Upload Image'}

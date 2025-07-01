@@ -18,7 +18,6 @@ type CanvasProps = {
   onDeselect: () => void;
   imageStyles: React.CSSProperties;
   aspectRatio: string;
-  backgroundColor: string;
 };
 
 const aspectRatioClasses: { [key: string]: string } = {
@@ -38,7 +37,6 @@ const Canvas = ({
   onDeselect,
   imageStyles, 
   aspectRatio,
-  backgroundColor,
 }: CanvasProps) => {
 
   return (
@@ -46,10 +44,9 @@ const Canvas = ({
       id="editor-area"
       ref={editorAreaRef}
       className={cn(
-        "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl",
+        "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-card",
         aspectRatioClasses[aspectRatio] || 'aspect-video'
       )}
-      style={{ backgroundColor }}
       onClick={onDeselect}
     >
       {imageSrc && (
