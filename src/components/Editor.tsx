@@ -45,7 +45,7 @@ type EditorState = {
 
 const createDefaultText = (): TextObject => ({
   id: `text-${Date.now()}-${Math.random()}`,
-  text: 'Your Text Here',
+  text: 'POV',
   fontSize: 72,
   fontFamily: 'Bebas Neue',
   color: '#FFFFFF',
