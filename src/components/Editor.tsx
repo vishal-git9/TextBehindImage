@@ -325,19 +325,8 @@ export default function Editor() {
   const setBrightness = useCallback((brightness: number) => setState(s => ({ ...s, brightness })), [setState]);
   const setContrast = useCallback((contrast: number) => setState(s => ({ ...s, contrast })), [setState]);
   const setBackgroundColor = useCallback((color: string) => {
-    if (state.imageSrc) {
-        toast({
-            title: "Image Replaced",
-            description: "The background image has been replaced with a solid color.",
-        });
-    }
-    setState(s => ({ 
-        ...s, 
-        backgroundColor: color,
-        imageSrc: '',
-        foregroundSrc: ''
-    }));
-  }, [setState, state.imageSrc, toast]);
+    setState(s => ({ ...s, backgroundColor: color }));
+  }, [setState]);
 
   return (
     <div className="flex flex-col md:flex-row md:h-screen bg-background">
