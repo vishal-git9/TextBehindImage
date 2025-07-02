@@ -113,7 +113,7 @@ const EditingPanel = ({
   return (
     <Card className="w-full md:w-96 border-0 md:border-r rounded-none flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between">
-        <Image src="/logo.png" alt="Text Behind Logo" width={140} height={35} />
+        <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
         <div className="flex items-center gap-1">
           <TooltipProvider>
             <Tooltip>
@@ -191,7 +191,7 @@ const EditingPanel = ({
                     <Label>AI Style Helper</Label>
                     <div className="flex space-x-2">
                       <Input value={aiCategory} onChange={(e) => setAiCategory(e.target.value)} placeholder="e.g., 'Nature', 'Tech'"/>
-                      <Button onClick={handleAiSuggest} disabled={isLoadingAi}>
+                      <Button onClick={handleAiSuggest} disabled={isLoadingAi} className="transition-transform hover:scale-[1.02] active:scale-[0.98]">
                           <Wand2 className="mr-2 h-4 w-4" />
                           {isLoadingAi ? 'Thinking...' : 'Suggest'}
                       </Button>
@@ -273,11 +273,32 @@ const EditingPanel = ({
                     </div>
                     <div className="space-y-2">
                       <Label>Style</Label>
-                      <div className="flex space-x-2">
-                        <Button variant={activeText?.fontWeight === 'bold' ? 'secondary' : 'outline'} size="icon" onClick={() => onUpdateTextProperty('fontWeight', activeText?.fontWeight === 'bold' ? 'normal' : 'bold')}><Bold /></Button>
-                        <Button variant={activeText?.fontStyle === 'italic' ? 'secondary' : 'outline'} size="icon" onClick={() => onUpdateTextProperty('fontStyle', activeText?.fontStyle === 'italic' ? 'normal' : 'italic')}><Italic /></Button>
-                        <Button variant={activeText?.textDecoration === 'underline' ? 'secondary' : 'outline'} size="icon" onClick={() => onUpdateTextProperty('textDecoration', activeText?.textDecoration === 'underline' ? 'none' : 'underline')}><Underline /></Button>
-                      </div>
+                        <div className="flex">
+                            <Button
+                                variant={activeText?.fontWeight === 'bold' ? 'secondary' : 'outline'}
+                                size="icon"
+                                onClick={() => onUpdateTextProperty('fontWeight', activeText?.fontWeight === 'bold' ? 'normal' : 'bold')}
+                                className="rounded-r-none"
+                            >
+                                <Bold />
+                            </Button>
+                            <Button
+                                variant={activeText?.fontStyle === 'italic' ? 'secondary' : 'outline'}
+                                size="icon"
+                                onClick={() => onUpdateTextProperty('fontStyle', activeText?.fontStyle === 'italic' ? 'normal' : 'italic')}
+                                className="rounded-none border-x-0"
+                            >
+                                <Italic />
+                            </Button>
+                            <Button
+                                variant={activeText?.textDecoration === 'underline' ? 'secondary' : 'outline'}
+                                size="icon"
+                                onClick={() => onUpdateTextProperty('textDecoration', activeText?.textDecoration === 'underline' ? 'none' : 'underline')}
+                                className="rounded-l-none"
+                            >
+                                <Underline />
+                            </Button>
+                        </div>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -319,9 +340,20 @@ const EditingPanel = ({
                     <div className="space-y-4 pt-6">
                         <div className="space-y-2">
                             <Label className="flex items-center"><RotateCw className="mr-2 h-4 w-4" />Rotation</Label>
-                            <div className="flex justify-between gap-2">
-                                {[0, 90, 180, 270].map(deg => (
-                                    <Button key={deg} variant={imageRotation === deg ? 'secondary' : 'outline'} onClick={() => setImageRotation(deg)} className="flex-1">{deg}°</Button>
+                            <div className="flex">
+                                {[0, 90, 180, 270].map((deg, index) => (
+                                    <Button
+                                        key={deg}
+                                        variant={imageRotation === deg ? 'secondary' : 'outline'}
+                                        onClick={() => setImageRotation(deg)}
+                                        className={cn("flex-1", {
+                                            "rounded-r-none": index === 0,
+                                            "rounded-l-none": index === 3,
+                                            "rounded-none border-x-0": index === 1 || index === 2,
+                                        })}
+                                    >
+                                        {deg}°
+                                    </Button>
                                 ))}
                             </div>
                         </div>
@@ -338,11 +370,11 @@ const EditingPanel = ({
                     <div className="space-y-4">
                         <h3 className="text-sm font-medium">AI Tools</h3>
                         <div className="space-y-2">
-                            <Button onClick={handleEnhanceImage} disabled={isEnhancing} className="w-full">
+                            <Button onClick={handleEnhanceImage} disabled={isEnhancing} className="w-full transition-transform hover:scale-[1.02] active:scale-[0.98]">
                                 <Wand2 className="mr-2 h-4 w-4" />
                                 {isEnhancing ? 'Enhancing...' : 'Enhance Image'}
                             </Button>
-                            <Button onClick={handleRemoveBackground} disabled={isRemovingBackground} className="w-full">
+                            <Button onClick={handleRemoveBackground} disabled={isRemovingBackground} className="w-full transition-transform hover:scale-[1.02] active:scale-[0.98]">
                                 <Wand2 className="mr-2 h-4 w-4" />
                                 {isRemovingBackground ? 'Processing...' : 'Text Behind Object'}
                             </Button>
