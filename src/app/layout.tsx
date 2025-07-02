@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'Text Weaver',
+  title: 'Text Behind',
   description: 'Create beautiful text on image compositions.',
 };
 

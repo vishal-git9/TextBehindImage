@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Bold, Italic, Underline, Wand2, Image as ImageIcon,
   Type, Paintbrush, Settings, RotateCw, ChevronsUpDown, Undo, Redo, Trash2, Plus
@@ -112,7 +113,7 @@ const EditingPanel = ({
   return (
     <Card className="w-full md:w-96 border-0 md:border-r rounded-none flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="font-headline text-2xl sm:text-3xl">Text Weaver</CardTitle>
+        <Image src="/logo.png" alt="Text Behind Logo" width={140} height={35} />
         <div className="flex items-center gap-1">
           <TooltipProvider>
             <Tooltip>
