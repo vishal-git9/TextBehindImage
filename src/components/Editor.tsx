@@ -2,6 +2,7 @@
 "use client";
 
 import { useRef, useCallback, useState, useMemo, useEffect } from 'react';
+import Image from 'next/image';
 import { toPng } from 'html-to-image';
 import { removeBackground } from '@imgly/background-removal';
 import { useGoogleFont } from '@/hooks/useGoogleFont';
@@ -11,11 +12,12 @@ import { suggestStyle, type SuggestStyleOutput } from '@/ai/flows/suggest-style'
 import { enhanceImage } from '@/ai/flows/enhance-image';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, ImageIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useHistoryState } from '@/hooks/useHistoryState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type TextObject = {
   id: string;
@@ -92,19 +94,7 @@ export default function Editor() {
   };
 
   useEffect(() => {
-    if (isLoaded) {
-      // If after loading from storage, we have no image and no text, it's a fresh start.
-      if (state.imageSrc === '' && state.texts.length === 0) {
-        const defaultText = createDefaultText();
-        // Use resetState to set this as the new baseline without creating an "undo" step.
-        resetState({ ...initialState, texts: [defaultText], selectedTextId: defaultText.id });
-      }
-    }
-  }, [isLoaded, state.imageSrc, state.texts.length, resetState]);
-
-  useEffect(() => {
     // If there are texts but none is selected, select the first one.
-    // This happens on initial load from fresh state.
     if (state.texts.length > 0 && !state.selectedTextId) {
         setState(s => ({...s, selectedTextId: s.texts[0].id}));
     }
@@ -343,6 +333,45 @@ export default function Editor() {
   const setBrightness = useCallback((brightness: number) => setState(s => ({ ...s, brightness })), [setState]);
   const setContrast = useCallback((contrast: number) => setState(s => ({ ...s, contrast })), [setState]);
 
+  if (!isLoaded) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+            <Skeleton className="h-full w-full max-w-lg aspect-video" />
+        </div>
+    );
+  }
+
+  if (!state.imageSrc) {
+    return (
+        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-muted p-4">
+            <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" />
+            <div className="w-full max-w-md">
+                <Card className="shadow-xl border-0">
+                    <CardHeader className="text-center">
+                        <div className="mx-auto w-fit mb-4">
+                            <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
+                        </div>
+                        <CardTitle className="text-2xl">Start with an Image</CardTitle>
+                        <CardDescription>Upload a picture to begin creating your masterpiece.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div 
+                            className="flex items-center justify-center w-full p-8 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+                            onClick={() => imageInputRef.current?.click()}
+                        >
+                            <div className="text-center">
+                                <ImageIcon className="mx-auto h-10 w-10 text-muted-foreground" />
+                                <p className="mt-4 text-sm font-semibold text-foreground">Click to upload</p>
+                                <p className="text-xs text-muted-foreground mt-1">PNG, JPG, or WEBP</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+  }
+
   return (
     <div className="flex flex-col md:flex-row md:h-screen bg-background">
       <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" />
@@ -423,5 +452,3 @@ export default function Editor() {
     </div>
   );
 }
-
-    
