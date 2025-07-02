@@ -82,6 +82,7 @@ export default function Editor() {
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+  const [imageToProcess, setImageToProcess] = useState<string | null>(null);
   const [naturalImageDimensions, setNaturalImageDimensions] = useState<{width: number, height: number} | null>(null);
 
   const editorAreaRef = useRef<HTMLDivElement>(null);
@@ -177,6 +178,13 @@ export default function Editor() {
     }, 50);
   }, [setState, toast]);
 
+  useEffect(() => {
+    if (imageToProcess) {
+      handleRemoveBackground(imageToProcess);
+      setImageToProcess(null);
+    }
+  }, [imageToProcess, handleRemoveBackground]);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const reader = new FileReader();
@@ -191,7 +199,7 @@ export default function Editor() {
         };
         resetState(newInitialState);
         setNaturalImageDimensions(null);
-        handleRemoveBackground(imageUrl);
+        setImageToProcess(imageUrl);
       };
       reader.readAsDataURL(e.target.files[0]);
     }
