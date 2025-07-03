@@ -56,6 +56,7 @@ type EditingPanelProps = {
   onAddText: () => void;
   onDeleteText: (id: string) => void;
   onSelectText: (id: string) => void;
+  handleChangeImage: () => void;
   handleEnhanceImage: () => void;
   handleAiSuggest: () => void;
   handleRemoveBackground: () => void;
@@ -68,7 +69,6 @@ type EditingPanelProps = {
   isLoadingAi: boolean;
   isRemovingBackground: boolean;
   aiSuggestions: SuggestStyleOutput | null;
-  imageInputRef: React.RefObject<HTMLInputElement>;
   canUndo: boolean;
   canRedo: boolean;
 };
@@ -76,7 +76,7 @@ type EditingPanelProps = {
 const EditingPanel = ({
   texts, selectedTextId, activeText, onUpdateTextProperty, onAddText, onDeleteText, onSelectText,
   imageSrc, foregroundSrc, imageRotation, setImageRotation, brightness, setBrightness, contrast, setContrast,
-  handleEnhanceImage, isEnhancing, imageInputRef, aspectRatio, setAspectRatio,
+  handleChangeImage, handleEnhanceImage, isEnhancing, aspectRatio, setAspectRatio,
   aiCategory, setAiCategory, handleAiSuggest, isLoadingAi, aiSuggestions,
   handleRemoveBackground, isRemovingBackground, handleClearForeground,
   undo, redo, canUndo, canRedo
@@ -330,8 +330,8 @@ const EditingPanel = ({
           <TabsContent value="image">
             <CardContent className="space-y-6 pt-6">
                 <div className="space-y-2">
-                    <Button variant="outline" className="w-full" onClick={() => imageInputRef.current?.click()}>
-                        <ImageIcon className="mr-2 h-4 w-4" /> {imageSrc ? 'Change Image' : 'Upload Image'}
+                    <Button variant="outline" className="w-full" onClick={handleChangeImage}>
+                        <ImageIcon className="mr-2 h-4 w-4" /> Change Image
                     </Button>
                 </div>
                 

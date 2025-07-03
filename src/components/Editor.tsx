@@ -87,6 +87,13 @@ export default function Editor() {
   const editorAreaRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
+  const handleChangeImage = useCallback(() => {
+    resetState(initialState);
+    setAiCategory('');
+    setAiSuggestions(null);
+    setNaturalImageDimensions(null);
+  }, [resetState]);
+
   useEffect(() => {
     // If there are texts but none is selected, select the first one.
     if (state.texts.length > 0 && !state.selectedTextId) {
@@ -179,7 +186,7 @@ export default function Editor() {
       const reader = new FileReader();
       
       setIsProcessingOnUpload(true);
-
+      
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
         
@@ -204,13 +211,13 @@ export default function Editor() {
             foregroundReader.readAsDataURL(foregroundBlob);
           })
           .catch((error) => {
-            console.error("Background removal failed", error);
+            console.error("Background removal failed on upload", error);
+            setIsProcessingOnUpload(false);
             toast({
               variant: "destructive",
               title: "Processing Failed",
               description: "Could not process image. It might be too large or in an unsupported format. Please try another.",
             });
-            setIsProcessingOnUpload(false);
           });
       };
       
@@ -380,7 +387,7 @@ export default function Editor() {
                 <>
                     <div className="text-center mb-8">
                         <div className="inline-block mb-4">
-                            <Image src={require("./images/logo.png")} alt="Text Weaver Logo" width={140} height={35} />
+                            <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
                         </div>
                         <h1 className="text-3xl font-bold tracking-tight">Start with an Image</h1>
                         <p className="text-muted-foreground mt-2">Upload an image to begin. Our AI will help you place text behind any object.</p>
@@ -404,7 +411,6 @@ export default function Editor() {
 
   return (
     <div className="flex flex-col md:flex-row md:h-screen bg-background">
-      <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" />
       <EditingPanel 
         texts={state.texts}
         selectedTextId={state.selectedTextId}
@@ -427,6 +433,7 @@ export default function Editor() {
         onAddText={handleAddText}
         onDeleteText={handleDeleteText}
         onSelectText={handleSelectText}
+        handleChangeImage={handleChangeImage}
         handleEnhanceImage={handleEnhanceImage}
         handleAiSuggest={handleAiSuggest}
         handleRemoveBackground={handleRemoveBackground}
@@ -440,7 +447,6 @@ export default function Editor() {
         isLoadingAi={isLoadingAi}
         isRemovingBackground={isRemovingBackground}
         aiSuggestions={aiSuggestions}
-        imageInputRef={imageInputRef}
       />
       <main className="flex-1 flex flex-col items-start justify-start p-4 md:p-8 bg-muted overflow-auto">
         <div className="w-full max-w-full flex-grow flex flex-col items-center justify-center gap-4">
