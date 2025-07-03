@@ -82,6 +82,7 @@ export default function Editor() {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [naturalImageDimensions, setNaturalImageDimensions] = useState<{width: number, height: number} | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const editorAreaRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -117,6 +118,7 @@ export default function Editor() {
     if (editorAreaRef.current === null) {
       return;
     }
+    setIsDownloading(true);
     toPng(editorAreaRef.current, { cacheBust: true, pixelRatio: 2 })
       .then((dataUrl) => {
         const link = document.createElement('a');
@@ -130,6 +132,9 @@ export default function Editor() {
             title: "Export Error",
             description: "Sorry, something went wrong while exporting the image.",
         })
+      })
+      .finally(() => {
+        setIsDownloading(false);
       });
   }, [toast]);
 
@@ -178,22 +183,25 @@ export default function Editor() {
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
 
-        // Process background immediately
+        // Reset state and set new image
+        const newText = createDefaultText();
+        const newState: EditorState = {
+            ...initialState,
+            texts: [newText],
+            imageSrc: imageUrl,
+            selectedTextId: newText.id,
+        };
+        resetState(newState);
+        setNaturalImageDimensions(null);
+        
+        // Immediately start background removal
         removeBackground(imageUrl)
           .then((foregroundBlob) => {
             const foregroundReader = new FileReader();
             foregroundReader.onloadend = () => {
               const foregroundUrl = foregroundReader.result as string;
-              const newText = createDefaultText();
-              const newInitialState: EditorState = {
-                ...initialState,
-                texts: [newText],
-                imageSrc: imageUrl,
-                foregroundSrc: foregroundUrl,
-                selectedTextId: newText.id,
-              };
-              resetState(newInitialState);
-              setNaturalImageDimensions(null);
+              // Update state with the foreground
+              setState(s => ({ ...s, foregroundSrc: foregroundUrl }));
             };
             foregroundReader.readAsDataURL(foregroundBlob);
           })
@@ -204,6 +212,8 @@ export default function Editor() {
               title: "Processing Failed",
               description: "Could not process image. It might be too large or in an unsupported format. Please try another.",
             });
+          })
+          .finally(() => {
             setIsProcessingOnUpload(false);
           });
       };
@@ -358,7 +368,7 @@ export default function Editor() {
 
   if (!state.imageSrc) {
     return (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-foreground p-4">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black text-foreground p-4">
             <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" disabled={isProcessingOnUpload} />
             
             {isProcessingOnUpload ? (
@@ -454,8 +464,12 @@ export default function Editor() {
                     containerStyle={containerStyle}
                 />
             </div>
-            <Button onClick={handleDownload} disabled={(state.texts.length === 0 && !state.imageSrc) || isRemovingBackground} className="shrink-0">
-                <Download className="mr-2 h-4 w-4" /> Download Image
+            <Button onClick={handleDownload} disabled={isDownloading || (state.texts.length === 0 && !state.imageSrc) || isRemovingBackground} className="shrink-0">
+              {isDownloading ? 'Downloading...' : (
+                <>
+                  <Download className="mr-2 h-4 w-4" /> Download Image
+                </>
+              )}
             </Button>
         </div>
       </main>
