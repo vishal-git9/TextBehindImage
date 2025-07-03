@@ -9,7 +9,6 @@ import { useGoogleFont } from '@/hooks/useGoogleFont';
 import EditingPanel from './EditingPanel';
 import Canvas from './Canvas';
 import { suggestStyle, type SuggestStyleOutput } from '@/ai/flows/suggest-style';
-import { enhanceImage } from '@/ai/flows/enhance-image';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import { Download, ImageIcon } from 'lucide-react';
@@ -153,45 +152,47 @@ export default function Editor() {
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
         
-        removeBackground(imageUrl)
-          .then((foregroundBlob) => {
-            const foregroundReader = new FileReader();
-            foregroundReader.onloadend = () => {
-              const foregroundUrl = foregroundReader.result as string;
-              
-              const newText = createDefaultText();
-              const newState: EditorState = {
-                  ...initialState,
-                  texts: [newText],
-                  imageSrc: imageUrl,
-                  foregroundSrc: foregroundUrl,
-                  selectedTextId: newText.id,
-              };
-              resetState(newState);
-              setNaturalImageDimensions(null);
-              setIsProcessingOnUpload(false);
-            };
-            foregroundReader.readAsDataURL(foregroundBlob);
-          })
-          .catch((error) => {
-            console.error("Background removal failed on upload", error);
-            const newText = createDefaultText();
-            const newState: EditorState = {
-                ...initialState,
-                texts: [newText],
-                imageSrc: imageUrl,
-                foregroundSrc: '',
-                selectedTextId: newText.id,
-            };
-            resetState(newState);
-            setNaturalImageDimensions(null);
-            setIsProcessingOnUpload(false);
-            toast({
-              variant: "destructive",
-              title: "Layering Skipped",
-              description: "Could not process image for layering. You can still add text on top.",
-            });
-          });
+        // Give the browser a moment to update the UI and show the loader
+        // before starting the CPU-intensive background removal task.
+        setTimeout(() => {
+            removeBackground(imageUrl)
+              .then((foregroundBlob) => {
+                const foregroundReader = new FileReader();
+                foregroundReader.onloadend = () => {
+                  const foregroundUrl = foregroundReader.result as string;
+                  
+                  const newText = createDefaultText();
+                  const newState: EditorState = {
+                      ...initialState,
+                      texts: [newText],
+                      imageSrc: imageUrl,
+                      foregroundSrc: foregroundUrl,
+                      selectedTextId: newText.id,
+                  };
+                  resetState(newState);
+                  setIsProcessingOnUpload(false);
+                };
+                foregroundReader.readAsDataURL(foregroundBlob);
+              })
+              .catch((error) => {
+                console.error("Background removal failed on upload", error);
+                const newText = createDefaultText();
+                const newState: EditorState = {
+                    ...initialState,
+                    texts: [newText],
+                    imageSrc: imageUrl,
+                    foregroundSrc: '',
+                    selectedTextId: newText.id,
+                };
+                resetState(newState);
+                setIsProcessingOnUpload(false);
+                toast({
+                  variant: "destructive",
+                  title: "Layering Skipped",
+                  description: "Could not process image for layering. You can still add text on top.",
+                });
+              });
+        }, 50); // A small delay is enough for the UI to repaint
       };
       
       reader.readAsDataURL(file);
