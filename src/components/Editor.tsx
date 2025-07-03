@@ -152,10 +152,8 @@ export default function Editor() {
     };
     setIsRemovingBackground(true);
 
-    // Use setTimeout to allow the UI to update with the skeleton loader before the heavy task
-    setTimeout(async () => {
-      try {
-        const blob = await removeBackground(imageToProcess);
+    removeBackground(imageToProcess)
+      .then((blob) => {
         const reader = new FileReader();
         reader.onloadend = () => {
           setState(s => ({ ...s, foregroundSrc: reader.result as string }));
@@ -166,7 +164,8 @@ export default function Editor() {
           setIsRemovingBackground(false);
         };
         reader.readAsDataURL(blob);
-      } catch (error) {
+      })
+      .catch ((error) => {
         console.error("Background removal failed", error);
         toast({
           variant: "destructive",
@@ -174,14 +173,17 @@ export default function Editor() {
           description: "Could not remove background. The image might be too complex or in an unsupported format.",
         });
         setIsRemovingBackground(false);
-      }
-    }, 50);
+      });
   }, [setState, toast]);
 
   useEffect(() => {
     if (imageToProcess) {
-      handleRemoveBackground(imageToProcess);
-      setImageToProcess(null);
+      // The state update to show the editor with the new image needs to commit before we start the heavy work.
+      // Using a timeout allows the UI to re-render.
+      setTimeout(() => {
+        handleRemoveBackground(imageToProcess);
+        setImageToProcess(null);
+      }, 50);
     }
   }, [imageToProcess, handleRemoveBackground]);
 
@@ -360,7 +362,7 @@ export default function Editor() {
                             <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
                         </div>
                         <CardTitle className="text-2xl">Start with an Image</CardTitle>
-                        <CardDescription>Upload a picture to begin creating your masterpiece.</CardDescription>
+                        <CardDescription>Upload a picture to begin. Our AI will help you place text behind any object.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div 
