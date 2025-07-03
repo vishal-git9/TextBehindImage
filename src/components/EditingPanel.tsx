@@ -106,7 +106,7 @@ const EditingPanel = ({
   return (
     <Card className="w-full md:w-96 border-0 md:border-r rounded-none flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between">
-        <Image src={require("./images/logo.png")} alt="Text Weaver Logo" width={140} height={35} />
+        <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
         <div className="flex items-center gap-1">
           <TooltipProvider>
             <Tooltip>
@@ -332,23 +332,18 @@ const EditingPanel = ({
                     <Separator />
                     <div className="space-y-4 pt-6">
                         <div className="space-y-2">
-                            <Label className="flex items-center"><RotateCw className="mr-2 h-4 w-4" />Rotation</Label>
-                            <div className="flex">
-                                {[0, 90, 180, 270].map((deg, index) => (
-                                    <Button
-                                        key={deg}
-                                        variant={imageRotation === deg ? 'secondary' : 'outline'}
-                                        onClick={() => setImageRotation(deg)}
-                                        className={cn("flex-1", {
-                                            "rounded-r-none": index === 0,
-                                            "rounded-l-none": index === 3,
-                                            "rounded-none border-x-0": index === 1 || index === 2,
-                                        })}
-                                    >
-                                        {deg}°
-                                    </Button>
-                                ))}
-                            </div>
+                            <Label htmlFor="image-rotation" className="flex items-center">
+                                <RotateCw className="mr-2 h-4 w-4" />
+                                Rotation: {imageRotation}°
+                            </Label>
+                            <Slider 
+                                id="image-rotation" 
+                                min={-45} 
+                                max={45} 
+                                step={1} 
+                                value={[imageRotation]} 
+                                onValueChange={(v) => setImageRotation(v[0])}
+                            />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="brightness">Brightness: {brightness}%</Label>
