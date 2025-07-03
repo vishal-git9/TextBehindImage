@@ -16,8 +16,6 @@ import { Download, ImageIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useHistoryState } from '@/hooks/useHistoryState';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type TextObject = {
   id: string;
@@ -77,22 +75,16 @@ export default function Editor() {
   const { toast } = useToast();
   const { state, setState, resetState, undo, redo, canUndo, canRedo, isLoaded } = useHistoryState<EditorState>(initialState, 'text-weaver-state-multi');
   
+  const [isProcessingOnUpload, setIsProcessingOnUpload] = useState(false);
   const [aiCategory, setAiCategory] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<SuggestStyleOutput | null>(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRemovingBackground, setIsRemovingBackground] = useState(false);
-  const [imageToProcess, setImageToProcess] = useState<string | null>(null);
   const [naturalImageDimensions, setNaturalImageDimensions] = useState<{width: number, height: number} | null>(null);
 
   const editorAreaRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-
-  const aspectRatioClasses: { [key: string]: string } = {
-    '1:1': 'aspect-square',
-    '4:3': 'aspect-[4/3]',
-    '16:9': 'aspect-video',
-  };
 
   useEffect(() => {
     // If there are texts but none is selected, select the first one.
@@ -141,8 +133,8 @@ export default function Editor() {
       });
   }, [toast]);
 
-  const handleRemoveBackground = useCallback((imageToProcess: string) => {
-    if (!imageToProcess) {
+  const handleRemoveBackground = useCallback(() => {
+    if (!state.imageSrc) {
         toast({
             variant: "destructive",
             title: "No Image",
@@ -152,7 +144,7 @@ export default function Editor() {
     };
     setIsRemovingBackground(true);
 
-    removeBackground(imageToProcess)
+    removeBackground(state.imageSrc)
       .then((blob) => {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -174,36 +166,49 @@ export default function Editor() {
         });
         setIsRemovingBackground(false);
       });
-  }, [setState, toast]);
-
-  useEffect(() => {
-    if (imageToProcess) {
-      // The state update to show the editor with the new image needs to commit before we start the heavy work.
-      // Using a timeout allows the UI to re-render.
-      setTimeout(() => {
-        handleRemoveBackground(imageToProcess);
-        setImageToProcess(null);
-      }, 50);
-    }
-  }, [imageToProcess, handleRemoveBackground]);
+  }, [state.imageSrc, setState, toast]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
       const reader = new FileReader();
+      
+      setIsProcessingOnUpload(true);
+
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
-        const newText = createDefaultText();
-        const newInitialState: EditorState = {
-            ...initialState,
-            texts: [newText],
-            imageSrc: imageUrl,
-            selectedTextId: newText.id,
-        };
-        resetState(newInitialState);
-        setNaturalImageDimensions(null);
-        setImageToProcess(imageUrl);
+
+        // Process background immediately
+        removeBackground(imageUrl)
+          .then((foregroundBlob) => {
+            const foregroundReader = new FileReader();
+            foregroundReader.onloadend = () => {
+              const foregroundUrl = foregroundReader.result as string;
+              const newText = createDefaultText();
+              const newInitialState: EditorState = {
+                ...initialState,
+                texts: [newText],
+                imageSrc: imageUrl,
+                foregroundSrc: foregroundUrl,
+                selectedTextId: newText.id,
+              };
+              resetState(newInitialState);
+              setNaturalImageDimensions(null);
+            };
+            foregroundReader.readAsDataURL(foregroundBlob);
+          })
+          .catch((error) => {
+            console.error("Background removal failed", error);
+            toast({
+              variant: "destructive",
+              title: "Processing Failed",
+              description: "Could not process image. It might be too large or in an unsupported format. Please try another.",
+            });
+            setIsProcessingOnUpload(false);
+          });
       };
-      reader.readAsDataURL(e.target.files[0]);
+      
+      reader.readAsDataURL(file);
     }
   };
 
@@ -353,27 +358,40 @@ export default function Editor() {
 
   if (!state.imageSrc) {
     return (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-muted p-4">
-            <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" />
+        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-foreground p-4">
+            <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" disabled={isProcessingOnUpload} />
             
-            <div className="text-center mb-8">
-                <div className="inline-block mb-4">
-                    <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
+            {isProcessingOnUpload ? (
+                 <div className="text-center">
+                    <svg className="animate-spin h-12 w-12 text-primary-foreground mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <h1 className="text-3xl font-bold tracking-tight">Processing Image...</h1>
+                    <p className="text-muted-foreground mt-2">AI is preparing your image layers. This can take a moment.</p>
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight">Start with an Image</h1>
-                <p className="text-muted-foreground mt-2">Upload a picture to begin. Our AI will help you place text behind any object.</p>
-            </div>
+            ) : (
+                <>
+                    <div className="text-center mb-8">
+                        <div className="inline-block mb-4">
+                            <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
+                        </div>
+                        <h1 className="text-3xl font-bold tracking-tight">Start with an Image</h1>
+                        <p className="text-muted-foreground mt-2">Upload an image to begin. Our AI will help you place text behind any object.</p>
+                    </div>
 
-            <div 
-                className="w-full max-w-2xl h-80 flex items-center justify-center border-2 border-dashed rounded-lg cursor-pointer hover:bg-card/80 transition-colors"
-                onClick={() => imageInputRef.current?.click()}
-            >
-                <div className="text-center">
-                    <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <p className="mt-4 text-lg font-semibold text-foreground">Click or drag file to this area to upload</p>
-                    <p className="text-sm text-muted-foreground mt-1">PNG, JPG, or WEBP supported</p>
-                </div>
-            </div>
+                    <div 
+                        className="w-full max-w-2xl h-80 flex items-center justify-center border-2 border-dashed rounded-lg cursor-pointer hover:bg-card/80 transition-colors"
+                        onClick={() => imageInputRef.current?.click()}
+                    >
+                        <div className="text-center">
+                            <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <p className="mt-4 text-lg font-semibold text-foreground">Click or drag file to this area to upload</p>
+                            <p className="text-sm text-muted-foreground mt-1">PNG, JPG, or WEBP supported</p>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
   }
@@ -405,7 +423,7 @@ export default function Editor() {
         onSelectText={handleSelectText}
         handleEnhanceImage={handleEnhanceImage}
         handleAiSuggest={handleAiSuggest}
-        handleRemoveBackground={() => handleRemoveBackground(state.imageSrc)}
+        handleRemoveBackground={handleRemoveBackground}
         handleClearForeground={handleClearForeground}
         undo={undo}
         redo={redo}
@@ -421,19 +439,6 @@ export default function Editor() {
       <main className="flex-1 flex flex-col items-start justify-start p-4 md:p-8 bg-muted overflow-auto">
         <div className="w-full max-w-full flex-grow flex flex-col items-center justify-center gap-4">
             <div className="w-full flex-grow flex items-center justify-center">
-            {isRemovingBackground ? (
-                <div className={cn(
-                    "relative w-full max-h-full overflow-hidden rounded-lg shadow-2xl bg-card",
-                    state.aspectRatio !== 'original' && (aspectRatioClasses[state.aspectRatio] || 'aspect-video'),
-                    containerStyle
-                )}>
-                    <Skeleton className="h-full w-full" />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-center p-4">
-                        <p className="text-white text-lg font-semibold">Processing Image...</p>
-                        <p className="text-white/80 text-sm mt-1">AI is analyzing your image to create layers.</p>
-                    </div>
-                </div>
-            ) : (
                 <Canvas 
                     editorAreaRef={editorAreaRef}
                     imageSrc={state.imageSrc}
@@ -448,7 +453,6 @@ export default function Editor() {
                     onImageLoad={handleImageLoad}
                     containerStyle={containerStyle}
                 />
-            )}
             </div>
             <Button onClick={handleDownload} disabled={(state.texts.length === 0 && !state.imageSrc) || isRemovingBackground} className="shrink-0">
                 <Download className="mr-2 h-4 w-4" /> Download Image
