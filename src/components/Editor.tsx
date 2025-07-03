@@ -355,28 +355,24 @@ export default function Editor() {
     return (
         <div className="min-h-screen w-full flex flex-col items-center justify-center bg-muted p-4">
             <Input type="file" className="hidden" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" />
-            <div className="w-full max-w-md">
-                <Card className="shadow-xl border-0">
-                    <CardHeader className="text-center">
-                        <div className="mx-auto w-fit mb-4">
-                            <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
-                        </div>
-                        <CardTitle className="text-2xl">Start with an Image</CardTitle>
-                        <CardDescription>Upload a picture to begin. Our AI will help you place text behind any object.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div 
-                            className="flex items-center justify-center w-full p-8 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
-                            onClick={() => imageInputRef.current?.click()}
-                        >
-                            <div className="text-center">
-                                <ImageIcon className="mx-auto h-10 w-10 text-muted-foreground" />
-                                <p className="mt-4 text-sm font-semibold text-foreground">Click to upload</p>
-                                <p className="text-xs text-muted-foreground mt-1">PNG, JPG, or WEBP</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+            
+            <div className="text-center mb-8">
+                <div className="inline-block mb-4">
+                    <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
+                </div>
+                <h1 className="text-3xl font-bold tracking-tight">Start with an Image</h1>
+                <p className="text-muted-foreground mt-2">Upload a picture to begin. Our AI will help you place text behind any object.</p>
+            </div>
+
+            <div 
+                className="w-full max-w-2xl h-80 flex items-center justify-center border-2 border-dashed rounded-lg cursor-pointer hover:bg-card/80 transition-colors"
+                onClick={() => imageInputRef.current?.click()}
+            >
+                <div className="text-center">
+                    <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <p className="mt-4 text-lg font-semibold text-foreground">Click or drag file to this area to upload</p>
+                    <p className="text-sm text-muted-foreground mt-1">PNG, JPG, or WEBP supported</p>
+                </div>
             </div>
         </div>
     );
