@@ -79,8 +79,6 @@ export default function Editor() {
   const [aiCategory, setAiCategory] = useState('');
   const [aiSuggestions, setAiSuggestions] = useState<SuggestStyleOutput | null>(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
   const [naturalImageDimensions, setNaturalImageDimensions] = useState<{width: number, height: number} | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -145,41 +143,6 @@ export default function Editor() {
       });
   }, [toast]);
 
-  const handleRemoveBackground = useCallback(() => {
-    if (!state.imageSrc) {
-        toast({
-            variant: "destructive",
-            title: "No Image",
-            description: "Please upload an image first.",
-        });
-        return;
-    };
-    setIsRemovingBackground(true);
-
-    removeBackground(state.imageSrc)
-      .then((blob) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setState(s => ({ ...s, foregroundSrc: reader.result as string }));
-          toast({
-            title: "Object Layered",
-            description: "The main subject is now layered on top of the text.",
-          });
-          setIsRemovingBackground(false);
-        };
-        reader.readAsDataURL(blob);
-      })
-      .catch ((error) => {
-        console.error("Background removal failed", error);
-        toast({
-          variant: "destructive",
-          title: "Layering Failed",
-          description: "Could not remove background. The image might be too complex or in an unsupported format.",
-        });
-        setIsRemovingBackground(false);
-      });
-  }, [state.imageSrc, setState, toast]);
-
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -212,11 +175,21 @@ export default function Editor() {
           })
           .catch((error) => {
             console.error("Background removal failed on upload", error);
+            const newText = createDefaultText();
+            const newState: EditorState = {
+                ...initialState,
+                texts: [newText],
+                imageSrc: imageUrl,
+                foregroundSrc: '',
+                selectedTextId: newText.id,
+            };
+            resetState(newState);
+            setNaturalImageDimensions(null);
             setIsProcessingOnUpload(false);
             toast({
               variant: "destructive",
-              title: "Processing Failed",
-              description: "Could not process image. It might be too large or in an unsupported format. Please try another.",
+              title: "Layering Skipped",
+              description: "Could not process image for layering. You can still add text on top.",
             });
           });
       };
@@ -268,35 +241,6 @@ export default function Editor() {
         setIsLoadingAi(false);
     }
   }, [aiCategory, state.selectedTextId, toast, handleUpdateTextProperty]);
-  
-  const handleEnhanceImage = useCallback(async () => {
-    if (!state.imageSrc) return;
-    setIsEnhancing(true);
-    try {
-      const result = await enhanceImage({ imageDataUri: state.imageSrc });
-      setState(s => ({...s, imageSrc: result.enhancedImageDataUri, foregroundSrc: '' }));
-      toast({
-        title: "Image Enhanced",
-        description: "The AI has enhanced your image.",
-      });
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Enhancement Failed",
-        description: "Could not enhance the image. Please try again.",
-      });
-    } finally {
-      setIsEnhancing(false);
-    }
-  }, [state.imageSrc, setState, toast]);
-
-  const handleClearForeground = useCallback(() => {
-    setState(s => ({ ...s, foregroundSrc: '' }));
-    toast({
-      title: "Layers Reset",
-      description: "The foreground layer has been removed.",
-    });
-  }, [setState, toast]);
 
   const imageStyles: React.CSSProperties = useMemo(() => ({
     transform: `rotate(${state.imageRotation}deg)`,
@@ -416,7 +360,6 @@ export default function Editor() {
         selectedTextId={state.selectedTextId}
         activeText={activeText}
         imageSrc={state.imageSrc}
-        foregroundSrc={state.foregroundSrc}
         imageRotation={state.imageRotation}
         brightness={state.brightness}
         contrast={state.contrast}
@@ -434,18 +377,13 @@ export default function Editor() {
         onDeleteText={handleDeleteText}
         onSelectText={handleSelectText}
         handleChangeImage={handleChangeImage}
-        handleEnhanceImage={handleEnhanceImage}
         handleAiSuggest={handleAiSuggest}
-        handleRemoveBackground={handleRemoveBackground}
-        handleClearForeground={handleClearForeground}
         undo={undo}
         redo={redo}
         canUndo={canUndo}
         canRedo={canRedo}
 
-        isEnhancing={isEnhancing}
         isLoadingAi={isLoadingAi}
-        isRemovingBackground={isRemovingBackground}
         aiSuggestions={aiSuggestions}
       />
       <main className="flex-1 flex flex-col items-start justify-start p-4 md:p-8 bg-muted overflow-auto">
@@ -466,7 +404,7 @@ export default function Editor() {
                     containerStyle={containerStyle}
                 />
             </div>
-            <Button onClick={handleDownload} disabled={isDownloading || (state.texts.length === 0 && !state.imageSrc) || isRemovingBackground} className="shrink-0">
+            <Button onClick={handleDownload} disabled={isDownloading || (state.texts.length === 0 && !state.imageSrc)} className="shrink-0">
               {isDownloading ? 'Downloading...' : (
                 <>
                   <Download className="mr-2 h-4 w-4" /> Download Image

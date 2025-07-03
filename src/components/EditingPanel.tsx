@@ -37,7 +37,6 @@ type EditingPanelProps = {
   selectedTextId: string | null;
   activeText: TextObject | null;
   imageSrc: string;
-  foregroundSrc: string;
   imageRotation: number;
   brightness: number;
   contrast: number;
@@ -57,17 +56,12 @@ type EditingPanelProps = {
   onDeleteText: (id: string) => void;
   onSelectText: (id: string) => void;
   handleChangeImage: () => void;
-  handleEnhanceImage: () => void;
   handleAiSuggest: () => void;
-  handleRemoveBackground: () => void;
-  handleClearForeground: () => void;
   undo: () => void;
   redo: () => void;
   
   // Action states
-  isEnhancing: boolean;
   isLoadingAi: boolean;
-  isRemovingBackground: boolean;
   aiSuggestions: SuggestStyleOutput | null;
   canUndo: boolean;
   canRedo: boolean;
@@ -75,10 +69,9 @@ type EditingPanelProps = {
 
 const EditingPanel = ({
   texts, selectedTextId, activeText, onUpdateTextProperty, onAddText, onDeleteText, onSelectText,
-  imageSrc, foregroundSrc, imageRotation, setImageRotation, brightness, setBrightness, contrast, setContrast,
-  handleChangeImage, handleEnhanceImage, isEnhancing, aspectRatio, setAspectRatio,
+  imageSrc, imageRotation, setImageRotation, brightness, setBrightness, contrast, setContrast,
+  handleChangeImage, aspectRatio, setAspectRatio,
   aiCategory, setAiCategory, handleAiSuggest, isLoadingAi, aiSuggestions,
-  handleRemoveBackground, isRemovingBackground, handleClearForeground,
   undo, redo, canUndo, canRedo
 }: EditingPanelProps) => {
   const [fontSearch, setFontSearch] = useState("");
@@ -113,7 +106,7 @@ const EditingPanel = ({
   return (
     <Card className="w-full md:w-96 border-0 md:border-r rounded-none flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between">
-        <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
+        <Image src={require("./images/logo.png")} alt="Text Weaver Logo" width={140} height={35} />
         <div className="flex items-center gap-1">
           <TooltipProvider>
             <Tooltip>
@@ -364,26 +357,6 @@ const EditingPanel = ({
                         <div className="space-y-2">
                             <Label htmlFor="contrast">Contrast: {contrast}%</Label>
                             <Slider id="contrast" min={0} max={200} step={1} value={[contrast]} onValueChange={(v) => setContrast(v[0])}/>
-                        </div>
-                    </div>
-                    <Separator className="my-6" />
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-medium">AI Tools</h3>
-                        <div className="space-y-2">
-                            <Button onClick={handleEnhanceImage} disabled={isEnhancing} className="w-full transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                                <Wand2 className="mr-2 h-4 w-4" />
-                                {isEnhancing ? 'Enhancing...' : 'Enhance Image'}
-                            </Button>
-                            <Button onClick={handleRemoveBackground} disabled={isRemovingBackground} className="w-full transition-transform hover:scale-[1.02] active:scale-[0.98]">
-                                <Wand2 className="mr-2 h-4 w-4" />
-                                {isRemovingBackground ? 'Processing...' : 'Text Behind Object'}
-                            </Button>
-                            {foregroundSrc && (
-                                <Button onClick={handleClearForeground} variant="outline" className="w-full">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Reset Layers
-                                </Button>
-                            )}
-                            <p className="text-xs text-muted-foreground px-1">Place the main object on top of the text.</p>
                         </div>
                     </div>
                 </div>
