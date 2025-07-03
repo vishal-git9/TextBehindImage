@@ -327,8 +327,8 @@ const EditingPanel = ({
                             </Label>
                             <Slider 
                                 id="image-rotation" 
-                                min={-45} 
-                                max={45} 
+                                min={-180} 
+                                max={180} 
                                 step={1} 
                                 value={[imageRotation]} 
                                 onValueChange={(v) => setImageRotation(v[0])}
