@@ -182,26 +182,24 @@ export default function Editor() {
 
       reader.onload = (event) => {
         const imageUrl = event.target?.result as string;
-
-        // Reset state and set new image
-        const newText = createDefaultText();
-        const newState: EditorState = {
-            ...initialState,
-            texts: [newText],
-            imageSrc: imageUrl,
-            selectedTextId: newText.id,
-        };
-        resetState(newState);
-        setNaturalImageDimensions(null);
         
-        // Immediately start background removal
         removeBackground(imageUrl)
           .then((foregroundBlob) => {
             const foregroundReader = new FileReader();
             foregroundReader.onloadend = () => {
               const foregroundUrl = foregroundReader.result as string;
-              // Update state with the foreground
-              setState(s => ({ ...s, foregroundSrc: foregroundUrl }));
+              
+              const newText = createDefaultText();
+              const newState: EditorState = {
+                  ...initialState,
+                  texts: [newText],
+                  imageSrc: imageUrl,
+                  foregroundSrc: foregroundUrl,
+                  selectedTextId: newText.id,
+              };
+              resetState(newState);
+              setNaturalImageDimensions(null);
+              setIsProcessingOnUpload(false);
             };
             foregroundReader.readAsDataURL(foregroundBlob);
           })
@@ -212,8 +210,6 @@ export default function Editor() {
               title: "Processing Failed",
               description: "Could not process image. It might be too large or in an unsupported format. Please try another.",
             });
-          })
-          .finally(() => {
             setIsProcessingOnUpload(false);
           });
       };
@@ -384,7 +380,7 @@ export default function Editor() {
                 <>
                     <div className="text-center mb-8">
                         <div className="inline-block mb-4">
-                            <Image src={require("./images/logo.png")} alt="Text Behind Logo" width={140} height={35} />
+                            <Image src={require("./images/logo.png")} alt="Text Weaver Logo" width={140} height={35} />
                         </div>
                         <h1 className="text-3xl font-bold tracking-tight">Start with an Image</h1>
                         <p className="text-muted-foreground mt-2">Upload an image to begin. Our AI will help you place text behind any object.</p>
