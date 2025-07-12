@@ -4,8 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Analytics } from '@vercel/analytics/next';
 
 export const metadata: Metadata = {
-  title: 'Text Behind',
-  description: 'Create beautiful text on image compositions.',
+  title: 'Text Behind Image - Stunning Text on Image Creator',
+  description: 'Design captivating text-on-image compositions effortlessly with Text Behind Image. Perfect for creating visually appealing graphics, banners, and social media posts.',
 };
 
 export default function RootLayout({
